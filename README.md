@@ -171,7 +171,7 @@ Generated supercollider
     
 
 
-## The Combinatorial Explosion: Your Generative "Cookbook"
+## The Combinatorial Explosion: A Generative "Cookbook"
 
 Theoretically, you can invent an infinite number of such algorithms. Think of each algorithm as a recipe with a few key ingredients. By changing any one ingredient or combining them in new ways, you create a new recipe.
 
