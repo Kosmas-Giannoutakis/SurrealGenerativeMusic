@@ -82,7 +82,7 @@ d.postln; // -> 3/4
 half = 0.i.s(1.i);
 half.postln; // -> {0 | 1}
 half.asString.postln; // -> 1/2
-
+```
     
 
 Arithmetic and Comparison
@@ -90,7 +90,7 @@ Arithmetic and Comparison
 Arithmetic is defined recursively, creating new, often very complex surreal numbers.
 Generated supercollider
 
-      
+```     
 // Addition
 c = 1.i + 1.i;
 c.postln; // -> 2
@@ -108,7 +108,7 @@ sum_of_halves.postln; // -> {{1/2 | 3/2}, {1/2 | 3/2}}
 (sum_of_halves == 1.i).postln; // -> true
 (2.i > 1.i).postln; // -> true
 (half < 1.i).postln; // -> true
-
+```
     
 
 Part 2: Generative Music with SurrealGenerator
@@ -119,7 +119,7 @@ Control Rate (.kr) Example
 Here we use an algorithm to modulate the frequency of a sine wave.
 Generated supercollider
 
-      
+```      
 (
 {
     var freq, gen;
@@ -141,7 +141,7 @@ Generated supercollider
     Pan2.ar(freq, LFNoise0.kr(0.5));
 }.play;
 )
-
+```
     
 
 Audio Rate (.ar) Example
@@ -149,7 +149,7 @@ Audio Rate (.ar) Example
 Here, the generator itself becomes the oscillator's waveform.
 Generated supercollider
 
-      
+```      
 (
 {
     var wave;
@@ -167,7 +167,7 @@ Generated supercollider
     LeakDC.ar(wave) * 0.4;
 }.play;
 )
-
+```
     
 
 
