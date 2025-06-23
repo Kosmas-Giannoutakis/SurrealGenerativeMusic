@@ -85,9 +85,6 @@ half.asString.postln; // -> 1/2
 
     
 
-IGNORE_WHEN_COPYING_START
-Use code with caution. Markdown
-IGNORE_WHEN_COPYING_END
 Arithmetic and Comparison
 
 Arithmetic is defined recursively, creating new, often very complex surreal numbers.
@@ -114,9 +111,6 @@ sum_of_halves.postln; // -> {{1/2 | 3/2}, {1/2 | 3/2}}
 
     
 
-IGNORE_WHEN_COPYING_START
-Use code with caution. Supercollider
-IGNORE_WHEN_COPYING_END
 Part 2: Generative Music with SurrealGenerator
 
 This is the creative heart of the library. SurrealGenerator uses the 15 built-in algorithms to produce number sequences, which are loaded into a buffer and read back as a control or audio signal.
@@ -150,9 +144,6 @@ Generated supercollider
 
     
 
-IGNORE_WHEN_COPYING_START
-Use code with caution. Supercollider
-IGNORE_WHEN_COPYING_END
 Audio Rate (.ar) Example
 
 Here, the generator itself becomes the oscillator's waveform.
@@ -179,9 +170,7 @@ Generated supercollider
 
     
 
-IGNORE_WHEN_COPYING_START
-Use code with caution. Supercollider
-IGNORE_WHEN_COPYING_END
+
 The Combinatorial Explosion: Your Generative "Cookbook"
 
 Theoretically, you can invent an infinite number of such algorithms. Think of each algorithm as a recipe with a few key ingredients. By changing any one ingredient or combining them in new ways, you create a new recipe.
