@@ -171,183 +171,137 @@ Generated supercollider
     
 
 
-The Combinatorial Explosion: Your Generative "Cookbook"
+## The Combinatorial Explosion: Your Generative "Cookbook"
 
 Theoretically, you can invent an infinite number of such algorithms. Think of each algorithm as a recipe with a few key ingredients. By changing any one ingredient or combining them in new ways, you create a new recipe.
 
 The core "ingredients" in your current set are:
 
-    The Selection Strategy: How do you choose where to add the next point?
+-   **The Selection Strategy**: *How do you choose where to add the next point?*
+    -   **Deterministic**: Always pick the largest gap, smallest gap, or alternate. (*generatePendulumGap*, *goldenCascade*)
+    -   **Random**: Pick any gap with equal probability. (*randomGapMidpoint*)
+    -   **Weighted/Probabilistic**: Pick a gap based on a calculated weight (e.g., its size). (*probabilisticMaxGap*)
+    -   **Systematic**: Follow a pre-defined, exhaustive system. (*conwayConstruction*)
+    -   **Stateful**: The choice depends on the history of previous choices. (*entropicGap*, *depthWeighted*)
 
-        Deterministic: Always pick the largest gap, smallest gap, or alternate. (generatePendulumGap, goldenCascade)
-
-        Random: Pick any gap with equal probability. (randomGapMidpoint)
-
-        Weighted/Probabilistic: Pick a gap based on a calculated weight (e.g., its size). (probabilisticMaxGap)
-
-        Systematic: Follow a pre-defined, exhaustive system. (conwayConstruction)
-
-        Stateful: The choice depends on the history of previous choices. (entropicGap, depthWeighted)
-
-    The Placement Rule: Once a gap (between left and right) is chosen, how do you calculate the new value v?
-
-        Midpoint: (left + right) / 2
-
-        Biased Point: (left * 0.75) + (right * 0.25)
-
-        Golden Ratio: left + (right - left) * 0.618...
-
-        Random Interpolation: left.blend(right, rrand(0.0, 1.0))
-
-        Modulated: left + (right - left) * someFunction(time, depth, etc.)
-
-        External Anchor: left * 0.5 (groundedMidpoint)
+-   **The Placement Rule**: *Once a gap (between `left` and `right`) is chosen, how do you calculate the new value `v`?*
+    -   **Midpoint**: `(left + right) / 2`
+    -   **Biased Point**: `(left * 0.75) + (right * 0.25)`
+    -   **Golden Ratio**: `left + (right - left) * 0.618...`
+    -   **Random Interpolation**: `left.blend(right, rrand(0.0, 1.0))`
+    -   **Modulated**: `left + (right - left) * someFunction(time, depth, etc.)`
+    -   **External Anchor**: `left * 0.5` (*groundedMidpoint*)
 
 Since you can mix and match any selection strategy with any placement rule, the number of possible combinations is already large. But it becomes infinite when you realize the functions themselves can be infinitely varied.
-The Generative Algorithms in Detail
+
+## The Generative Algorithms in Detail
 
 The 15 algorithms are ordered by conceptual complexity, from simple and deterministic to complex and modulated.
-Tier 1: Foundational & Deterministic
 
-These algorithms are non-random and produce predictable, structured output.
+### Tier 1: Foundational & Deterministic
 
-1. Conway Construction
+*These algorithms are non-random and produce predictable, structured output.*
 
-    Description: The original, canonical method for generating surreal numbers. It exhaustively creates all dyadic rationals generation by generation.
+1.  **Conway Construction**
+    -   **Description**: The original, canonical method for generating surreal numbers. It exhaustively creates all dyadic rationals generation by generation.
+    -   **Selection Strategy**: Systematic. It doesn't "select" gaps but generates all new numbers for a given generation (e.g., all fourths, then all eighths).
+    -   **Placement Rule**: Generates all odd numerators over the current power-of-two denominator.
 
-    Selection Strategy: Systematic. It doesn't "select" gaps but generates all new numbers for a given generation (e.g., all fourths, then all eighths).
+2.  **Pendulum Gap**
+    -   **Description**: A deterministic strategy that creates a balanced rhythm by alternating between coarse and fine refinement.
+    -   **Selection Strategy**: Deterministic. On even steps, it picks the largest gap. On odd steps, it picks the smallest gap.
+    -   **Placement Rule**: Midpoint.
 
-    Placement Rule: Generates all odd numerators over the current power-of-two denominator.
+3.  **Golden Cascade**
+    -   **Description**: Creates aesthetically pleasing, self-similar distributions by repeatedly splitting the largest gap according to the golden ratio.
+    -   **Selection Strategy**: Deterministic. Always picks the largest gap.
+    -   **Placement Rule**: Golden Ratio. It cycles through split ratios of 0.382, 0.5, and 0.618.
 
-2. Pendulum Gap
+---
 
-    Description: A deterministic strategy that creates a balanced rhythm by alternating between coarse and fine refinement.
+### Tier 2: Simple Stochastic
 
-    Selection Strategy: Deterministic. On even steps, it picks the largest gap. On odd steps, it picks the smallest gap.
+*These algorithms introduce the element of chance in a straightforward way.*
 
-    Placement Rule: Midpoint.
+4.  **Random Gap Midpoint**
+    -   **Description**: The simplest stochastic subdivision. Creates a uniform but randomized pattern.
+    -   **Selection Strategy**: Random. Picks any available gap with equal probability.
+    -   **Placement Rule**: Midpoint.
 
-3. Golden Cascade
+5.  **Bias Midpoint**
+    -   **Description**: A simple variation of the above that introduces asymmetry, causing points to drift.
+    -   **Selection Strategy**: Random.
+    -   **Placement Rule**: Biased Point (75% towards the left boundary).
 
-    Description: Creates aesthetically pleasing, self-similar distributions by repeatedly splitting the largest gap according to the golden ratio.
+6.  **Grounded Midpoint**
+    -   **Description**: Creates a "gravitational pull" towards zero by occasionally ignoring the gap and anchoring to the left boundary.
+    -   **Selection Strategy**: Random.
+    -   **Placement Rule**: Mixed. With a given probability, it's an External Anchor (`left * 0.5`); otherwise, it's a Midpoint.
 
-    Selection Strategy: Deterministic. Always picks the largest gap.
+7.  **Random Pair Interpolation**
+    -   **Description**: More chaotic than gap-based methods, as it can create new points anywhere between any two existing points.
+    -   **Selection Strategy**: Random Pair. Selects two random, not-necessarily-adjacent points from the entire palette.
+    -   **Placement Rule**: Random Interpolation between the two chosen points.
 
-    Placement Rule: Golden Ratio. It cycles through split ratios of 0.382, 0.5, and 0.618.
+---
 
-Tier 2: Simple Stochastic
+### Tier 3: Probabilistic & Weighted
 
-These algorithms introduce the element of chance in a straightforward way.
+*These algorithms use weighted probability to create more organic, non-uniform patterns.*
 
-4. Random Gap Midpoint
+8.  **Probabilistic Max Gap**
+    -   **Description**: A classic generative algorithm that produces natural-looking distributions by favoring larger gaps.
+    -   **Selection Strategy**: Weighted/Probabilistic. The probability of a gap being chosen is proportional to its size.
+    -   **Placement Rule**: Midpoint.
 
-    Description: The simplest stochastic subdivision. Creates a uniform but randomized pattern.
+---
 
-    Selection Strategy: Random. Picks any available gap with equal probability.
+### Tier 4: State-Driven & Hierarchical
 
-    Placement Rule: Midpoint.
+*These methods maintain "memory" or state to influence future decisions, creating evolving structures.*
 
-5. Bias Midpoint
+9.  **Binary Heap**
+    -   **Description**: Uses a priority queue to create a balanced, tree-like refinement that focuses on the most significant gaps first.
+    -   **Selection Strategy**: Stateful/Priority. Chooses the interval with the highest priority, calculated from its size and generation depth.
+    -   **Placement Rule**: Midpoint.
 
-    Description: A simple variation of the above that introduces asymmetry, causing points to drift.
+10. **Entropic Gap**
+    -   **Description**: Simulates diffusion by creating clusters of activity that spread to neighboring regions.
+    -   **Selection Strategy**: Stateful/Weighted. It boosts the selection probability of gaps that are adjacent to recently split gaps.
+    -   **Placement Rule**: Midpoint.
 
-    Selection Strategy: Random.
+11. **Depth Weighted**
+    -   **Description**: Creates complex, hierarchical branching by using generation depth to influence both selection and placement.
+    -   **Selection Strategy**: Weighted/Probabilistic, based on gap size.
+    -   **Placement Rule**: Stateful/Modulated. The split ratio is biased based on the relative depths of the gap's boundary points.
 
-    Placement Rule: Biased Point (75% towards the left boundary).
+---
 
-6. Grounded Midpoint
+### Tier 5: Advanced Mathematical & Modulated
 
-    Description: Creates a "gravitational pull" towards zero by occasionally ignoring the gap and anchoring to the left boundary.
+*These algorithms use concepts from higher math to generate intricate, often wave-like patterns.*
 
-    Selection Strategy: Random.
+12. **Trigonometric Surreal**
+    -   **Description**: Creates wave-like patterns by modulating the split point with a sine wave that evolves over time.
+    -   **Selection Strategy**: Deterministic. Always picks the largest gap.
+    -   **Placement Rule**: Modulated. The split ratio is controlled by a `sin()` function whose phase changes with time and generation depth.
 
-    Placement Rule: Mixed. With a given probability, it's an External Anchor (left * 0.5); otherwise, it's a Midpoint.
+13. **Dyadic Wave**
+    -   **Description**: Creates wave-like density variations by using a sine wave to modulate both gap selection and split position.
+    -   **Selection Strategy**: Weighted/Modulated. Gap selection probability is weighted by size and a `sin()` function.
+    -   **Placement Rule**: Modulated by the same `sin()` function.
 
-7. Random Pair Interpolation
+14. **Prime Harmonic Oscillator**
+    -   **Description**: Generates complex, musically-structured patterns using harmonic relationships between prime numbers to guide subdivision.
+    -   **Selection Strategy**: Stateful/Priority. Priority is a complex function of gap size, depth, and an assigned prime number.
+    -   **Placement Rule**: Modulated. The split ratio is a function of the assigned prime and a trigonometric phase.
 
-    Description: More chaotic than gap-based methods, as it can create new points anywhere between any two existing points.
-
-    Selection Strategy: Random Pair. Selects two random, not-necessarily-adjacent points from the entire palette.
-
-    Placement Rule: Random Interpolation between the two chosen points.
-
-Tier 3: Probabilistic & Weighted
-
-These algorithms use weighted probability to create more organic, non-uniform patterns.
-
-8. Probabilistic Max Gap
-
-    Description: A classic generative algorithm that produces natural-looking distributions by favoring larger gaps.
-
-    Selection Strategy: Weighted/Probabilistic. The probability of a gap being chosen is proportional to its size.
-
-    Placement Rule: Midpoint.
-
-Tier 4: State-Driven & Hierarchical
-
-These methods maintain "memory" or state to influence future decisions, creating evolving structures.
-
-9. Binary Heap
-
-    Description: Uses a priority queue to create a balanced, tree-like refinement that focuses on the most significant gaps first.
-
-    Selection Strategy: Stateful/Priority. Chooses the interval with the highest priority, calculated from its size and generation depth.
-
-    Placement Rule: Midpoint.
-
-10. Entropic Gap
-
-    Description: Simulates diffusion by creating clusters of activity that spread to neighboring regions.
-
-    Selection Strategy: Stateful/Weighted. It boosts the selection probability of gaps that are adjacent to recently split gaps.
-
-    Placement Rule: Midpoint.
-
-11. Depth Weighted
-
-    Description: Creates complex, hierarchical branching by using generation depth to influence both selection and placement.
-
-    Selection Strategy: Weighted/Probabilistic, based on gap size.
-
-    Placement Rule: Stateful/Modulated. The split ratio is biased based on the relative depths of the gap's boundary points.
-
-Tier 5: Advanced Mathematical & Modulated
-
-These algorithms use concepts from higher math to generate intricate, often wave-like patterns.
-
-12. Trigonometric Surreal
-
-    Description: Creates wave-like patterns by modulating the split point with a sine wave that evolves over time.
-
-    Selection Strategy: Deterministic. Always picks the largest gap.
-
-    Placement Rule: Modulated. The split ratio is controlled by a sin() function whose phase changes with time and generation depth.
-
-13. Dyadic Wave
-
-    Description: Creates wave-like density variations by using a sine wave to modulate both gap selection and split position.
-
-    Selection Strategy: Weighted/Modulated. Gap selection probability is weighted by size and a sin() function.
-
-    Placement Rule: Modulated by the same sin() function.
-
-14. Prime Harmonic Oscillator
-
-    Description: Generates complex, musically-structured patterns using harmonic relationships between prime numbers to guide subdivision.
-
-    Selection Strategy: Stateful/Priority. Priority is a complex function of gap size, depth, and an assigned prime number.
-
-    Placement Rule: Modulated. The split ratio is a function of the assigned prime and a trigonometric phase.
-
-15. Complex Spiral
-
-    Description: The most conceptually distinct algorithm. It operates in the 2D complex plane to create beautiful spiral patterns.
-
-    Selection Strategy: Deterministic (Angular). Finds the largest angular gap between points in polar coordinates.
-
-    Placement Rule: Polar/Modulated. Calculates a new angle and a new magnitude (which can spiral inwards or outwards) to place the point.
-
-Contributing
+15. **Complex Spiral**
+    -   **Description**: The most conceptually distinct algorithm. It operates in the 2D complex plane to create beautiful spiral patterns.
+    -   **Selection Strategy**: Deterministic (Angular). Finds the largest *angular* gap between points in polar coordinates.
+    -   **Placement Rule**: Polar/Modulated. Calculates a new angle and a new magnitude (which can spiral inwards or outwards) to place the point.
+
+## Contributing
 
 This project is open to new ideas! If you invent a new generative algorithm based on these principles, feel free to submit a pull request. Please add your algorithm to the SurrealAlgorithms class and document its "Selection Strategy" and "Placement Rule."
 License
