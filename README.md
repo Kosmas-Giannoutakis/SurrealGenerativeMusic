@@ -59,29 +59,18 @@ The `Surreal` class allows you to work directly with these numbers.
 ### Creating Numbers
 
 ```supercollider
-// Start the interpreter and post the window
-s.boot;
+// Fundamental numbers
+~zero = Surreal.zero;        // { | } = 0
+~one = 1.i;                  // {0|} = 1
+~negOne = (-1).i;            // {|0} = -1
+~half = Surreal.dyadic(1,2); // {0|1} = 1/2
+~two = 2.i;                  // {1|} = 2
 
-// Create integers using the .i convenience method
-a = 1.i;
-b = 2.i;
-a.postln; // -> 1
-b.postln; // -> 2
+// Alternative creation
+~oneAlt = Surreal.new([~zero], []);
 
-// Create the number zero
-z = Surreal.zero;
-z.postln; // -> { | }
-
-// Create a dyadic rational (e.g., 3/4)
-// {1/2 | 1} -> { {0|1} | { {0|} | } }
-d = Surreal.dyadic(3, 4);
-d.postln; // -> 3/4
-
-// Create the simplest number between 0 and 1 (which is 1/2)
-// using the special 's' method (stands for "star" or "split")
-half = 0.i.s(1.i);
-half.postln; // -> {0 | 1}
-half.asString.postln; // -> 1/2
+// Alternative creation
+~oneAlt = Surreal.new([~zero], []);
 ```
     
 
@@ -91,27 +80,37 @@ Arithmetic is defined recursively, creating new, often very complex surreal numb
 Generated supercollider
 
 ```     
-// Addition
-c = 1.i + 1.i;
-c.postln; // -> 2
+// Addition 
+(~one + ~one).asString;      // 2 (1 + 1 = 2)
+(~half + ~half).asString;    // 1 (0.5 + 0.5 = 1)
 
-// Multiplication
-m = 2.i * 3.i;
-m.postln; // -> 6
+// Subtraction 
+(~two - ~one).asString;      // 1 (2 - 1 = 1)
+(~half - ~one).asString;     // -1/2 (0.5 - 1 = -0.5)
 
-// The raw form of 1/2 + 1/2
-// It evaluates to 1, but its internal structure is complex
-sum_of_halves = (0.i.s(1.i)) + (0.i.s(1.i));
-sum_of_halves.postln; // -> {{1/2 | 3/2}, {1/2 | 3/2}}
+// Multiplication 
+(~two * ~half).asString;     // 1 (2 × 0.5 = 1)
+(~negOne * ~two).asString;   // -2 (-1 × 2 = -2)
 
-// Comparisons work as expected
-(sum_of_halves == 1.i).postln; // -> true
-(2.i > 1.i).postln; // -> true
-(half < 1.i).postln; // -> true
+// Negation 
+~one.neg.asString;           // -1
+~half.neg.asString;          // -1/2
+
+// Compound expressions
+(~half + ~half * ~two).asString;  // 3/2 (0.5 + (0.5×2) = 1.5)
+
+// Fractional operations
+~quarter = Surreal.dyadic(1,4);
+(~quarter * ~two).asString;       // 1/2 (0.25 × 2 = 0.5)
+
+// Comparisons
+~one < ~two;          // true
+~negOne == (-1).i;    // true
+~half >= ~quarter;    // true
 ```
     
 
-Part 2: Generative Music with SurrealGenerator
+##Part 2: Generative Music with SurrealGenerator
 
 This is the creative heart of the library. SurrealGenerator uses the 15 built-in algorithms to produce number sequences, which are loaded into a buffer and read back as a control or audio signal.
 Control Rate (.kr) Example
@@ -122,23 +121,23 @@ Generated supercollider
 ```      
 (
 {
-    var freq, gen;
+    var sin, gen;
 
     // Use Algorithm #11 (depthWeighted) to generate 100 points
     // Read the sequence back at a rate of 2 Hz
     gen = SurrealGenerator.kr(
         algorithm: 11,
         steps: 100,
-        freq: 2,
+        freq: 20,
         min: 200, // map to a frequency range of 200-800 Hz
         max: 800,
         curve: \exp
     );
 
     // Use the generator to control the frequency
-    freq = SinOsc.ar(gen, mul: 0.2);
+    sin = SinOsc.ar(gen, mul: 0.2)!2;
     // Pan and output the sound
-    Pan2.ar(freq, LFNoise0.kr(0.5));
+    sin * -23.dbamp
 }.play;
 )
 ```
@@ -158,13 +157,13 @@ Generated supercollider
     wave = SurrealGenerator.ar(
         algorithm: 15,
         steps: 500,
-        freq: 440,
+		freq: MouseX.kr(20,2000,1),
         min: -1,
         max: 1
-    );
+    )!2;
 
     // The generator *is* the sound
-    LeakDC.ar(wave) * 0.4;
+    LeakDC.ar(wave) * -23.dbamp;
 }.play;
 )
 ```
