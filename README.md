@@ -288,26 +288,42 @@ The 15 algorithms are ordered by conceptual complexity, from simple and determin
 
 ---
 
-### Tier 5: Advanced Mathematical & Modulated
+### Tier 5: Advanced Deterministic (Number Theory)
 
-*These algorithms use concepts from higher math to generate intricate, often wave-like patterns.*
+*These algorithms leverage deep mathematical concepts to produce highly complex but non-random patterns.*
 
-12. **Trigonometric Surreal**
+12. **`riemannZetaSplit`**
+    -   **Description**: Derives its split logic from the Euler product formula for the Riemann Zeta function. The split ratio is determined by the formula `(1 - p^-s)`, where `p` cycles through the prime numbers.
+    -   **Selection Strategy**: Deterministic. Always picks the largest gap.
+    -   **Placement Rule**: Zeta Ratio. The direction of the split can be alternated or determined by a property of the current prime number (`splitMode` parameter).
+
+13. **`zetaCantor` (Flagship)**
+    -   **Description**: The most advanced deterministic generator, designed to produce non-convergent, endlessly varied sequences. It balances the desire to split large gaps with the desire to split gaps near the Golden Ratio.
+    -   **Selection Strategy**: Stateful/Priority. Chooses the gap with the highest score, calculated from a tunable blend of `gap_bias` and `phi_bias`.
+    -   **Placement Rule**: Zeta Ratio, with direction determined by the current prime number.
+
+---
+
+### Tier 6: Modulated & Complex
+
+*These algorithms use dynamic modulation or operate in higher dimensions.*
+
+14. **`trigonometricSurreal`**
     -   **Description**: Creates wave-like patterns by modulating the split point with a sine wave that evolves over time.
     -   **Selection Strategy**: Deterministic. Always picks the largest gap.
     -   **Placement Rule**: Modulated. The split ratio is controlled by a `sin()` function whose phase changes with time and generation depth.
 
-13. **Dyadic Wave**
+15. **`dyadicWave`**
     -   **Description**: Creates wave-like density variations by using a sine wave to modulate both gap selection and split position.
     -   **Selection Strategy**: Weighted/Modulated. Gap selection probability is weighted by size and a `sin()` function.
     -   **Placement Rule**: Modulated by the same `sin()` function.
 
-14. **Prime Harmonic Oscillator**
+16. **`primeHarmonicOscillator`**
     -   **Description**: Generates complex, musically-structured patterns using harmonic relationships between prime numbers to guide subdivision.
     -   **Selection Strategy**: Stateful/Priority. Priority is a complex function of gap size, depth, and an assigned prime number.
     -   **Placement Rule**: Modulated. The split ratio is a function of the assigned prime and a trigonometric phase.
 
-15. **Complex Spiral**
+17. **`complexSpiral`**
     -   **Description**: The most conceptually distinct algorithm. It operates in the 2D complex plane to create beautiful spiral patterns.
     -   **Selection Strategy**: Deterministic (Angular). Finds the largest *angular* gap between points in polar coordinates.
     -   **Placement Rule**: Polar/Modulated. Calculates a new angle and a new magnitude (which can spiral inwards or outwards) to place the point.

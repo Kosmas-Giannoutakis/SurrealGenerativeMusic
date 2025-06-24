@@ -1,4 +1,20 @@
 SurrealAlgorithms {
+
+	classvar <primes;
+
+	*initClass {
+        "Initializing SurrealAlgorithms class variables.".postln;
+        primes = [
+            2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
+            73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151,
+            157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233,
+            239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317,
+            331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419,
+            421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503,
+            509, 521, 523, 541
+        ];
+    }
+
     // Helper method: Efficient binary search (no changes needed)
     *findInsertionIndex { |array, value|
         var low, high, mid;
@@ -555,15 +571,9 @@ SurrealAlgorithms {
 		var sequence, intervals, current, left, right, depth;
 		var primeIndex, prime, harmonicRatio, angle, splitRatio;
 		var mid, newDepth, i, maxPriority, priority, gap;
-		var chosenIndex, interval, primes, temp;
+		var chosenIndex, interval, temp;
 		var cycle, baseRatio, goldenRatio, minRatio, maxRatio;
 
-		// First 50 primes for variety
-		primes = [
-			2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71,
-			73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151,
-			157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229
-		];
 		sequence = List.new;
 		intervals = List[[0.0, 1.0, 0, 0]];  // [left, right, depth, primeIndex]
 		cycle = 0;
@@ -940,6 +950,157 @@ SurrealAlgorithms {
 			^sequence
 		} {
 			^angles.collect(_ / 2pi).sort
+		}
+	}
+
+	// 16. Riemann Zeta Split (Advanced)
+	// This algorithm uses the profound connection between the Riemann Zeta function and
+	// prime numbers to determine its subdivision logic. This advanced version introduces
+	// parameters to create far more complex and varied patterns without randomness.
+	//
+	// - splitMode: Controls the direction of the split.
+	//     - \left: The original behavior, always splitting from the left boundary.
+	//     - \alternating: Flips between splitting from the left and right boundaries.
+	//     - \prime: Uses a deep property of number theory (prime % 4) to decide
+	//       the split direction, creating a complex but deterministic pattern.
+	// - s_drift: Causes the 's' parameter to change based on the current prime's
+	//   magnitude, preventing simple convergence.
+	*riemannZetaSplit { |steps=100, chronological=true, s=2.0, primeOffset=0, splitMode=\prime, s_drift=0.05|
+		var palette, sequence, gaps, maxGap, maxIndex, left, right, v;
+		var prime, current_s, zetaRatio, finalRatio;
+
+		if (s <= 1.0) {
+			Error("The base Riemann Zeta exponent 's' must be greater than 1.").throw;
+		};
+
+		palette = [0.0, 1.0];
+		sequence = [];
+
+		steps.do { |iter|
+			// 1. Find the largest gap
+			gaps = palette.differentiate.drop(1);
+			maxGap = gaps.maxItem;
+			maxIndex = if(maxGap.isNil) { 0 } { gaps.indexOf(maxGap) };
+
+			// 2. Get the current prime
+			prime = primes[(iter + primeOffset) % primes.size];
+
+			// 3. Modulate the 's' parameter based on the prime's magnitude
+			// This causes the split character to evolve as we use larger primes.
+			// The log ensures the drift isn't too extreme.
+			current_s = (s + (s_drift * log(prime))).max(1.0001);
+
+			// 4. Calculate the base ratio from the Zeta function's Euler product term
+			zetaRatio = 1.0 - (prime.pow(current_s.neg));
+
+			// 5. Determine the final split ratio based on the chosen mode
+			finalRatio = switch(splitMode)
+			{ \left }{
+				// Original behavior: always split relative to the left boundary.
+				zetaRatio;
+			}
+			{ \alternating }{
+				// Simple alternation between left-biased and right-biased splits.
+				if(iter.even) { zetaRatio } { 1.0 - zetaRatio };
+			}
+			{ \prime }{
+				// Use number theory to decide the direction. Primes (other than 2)
+				// are either of the form 4k+1 or 4k+3. This property is used
+				// to deterministically flip the split direction.
+				if ((prime % 4) == 1) { zetaRatio } { 1.0 - zetaRatio };
+			}
+			{
+				// Default to the prime-based mode if an unknown symbol is given.
+				if ((prime % 4) == 1) { zetaRatio } { 1.0 - zetaRatio };
+			};
+
+			// 6. Calculate the new value
+			left = palette[maxIndex];
+			v = left + (maxGap * finalRatio);
+
+			// 7. Update the palette and sequence
+			sequence = sequence.add(v);
+			palette = palette.insert(maxIndex + 1, v);
+		};
+
+		if (chronological) {
+			^sequence
+		} {
+			^palette
+		}
+	}
+
+	// 17. Zeta-Cantor Hybrid (Advanced Non-Convergent)
+	// This algorithm represents the most sophisticated deterministic generator in the
+	// suite, designed to produce endlessly varied, non-convergent, and structurally
+	// complex sequences. It addresses the convergence traps of previous versions by
+	// balancing two competing priorities with tunable biases.
+	//
+	// Priority = (gap_size ^ gap_bias) * (phi_proximity ^ phi_bias)
+	//
+	// 1. gap_bias: The weight given to the physical size of a gap.
+	// 2. phi_bias: The weight given to a gap's proximity to the Golden Ratio.
+	//
+	// By tuning these two biases, the algorithm can be made to favor exploring large
+	// empty regions, or to focus on creating intricate, self-similar structures,
+	// or a dynamic balance of both, ensuring it never gets stuck.
+	*zetaCantor {
+		|steps=200, chronological=true,
+		s=1.1,           // Zeta exponent (controls split asymmetry)
+		primeOffset=0,
+		gap_bias=1.0,    // How much to prefer large gaps (1.0 is standard)
+		phi_bias=0.25,   // How much to prefer gaps near the Golden Ratio
+		phi_factor=0.61803398875|
+
+		var palette, sequence, left, right, v;
+		var prime, zetaRatio, finalRatio;
+
+		palette = [0.0, 1.0];
+		sequence = [];
+
+		steps.do { |iter|
+			var gaps, priorities, maxPriority, chosenIndex;
+
+			// 1. Calculate weighted priority scores for all gaps
+			gaps = palette.differentiate.drop(1);
+			priorities = gaps.collect { |gap, i|
+				var midpoint = palette[i] + (gap / 2);
+				var phi_proximity, gap_score, phi_score;
+
+				// Score based on gap size
+				gap_score = gap.pow(gap_bias);
+
+				// Score based on proximity to phi. Value is 1.0 at phi, falls to 0.0 away.
+				phi_proximity = 1.0 - (abs(midpoint - phi_factor) * 2).clip(0.0, 1.0);
+				phi_score = phi_proximity.pow(phi_bias);
+
+				// The final priority is the product of the two scores
+				gap_score * phi_score;
+			};
+
+			// 2. Find the gap with the highest priority score
+			maxPriority = priorities.maxItem;
+			chosenIndex = if(maxPriority.isNil) { 0 } { priorities.indexOf(maxPriority) };
+
+			// 3. Get the current prime and calculate the Zeta-based split ratio
+			prime = primes[(iter + primeOffset) % primes.size];
+			zetaRatio = 1.0 - (prime.pow(s.neg));
+			finalRatio = if((prime % 4) == 1) { zetaRatio } { 1.0 - zetaRatio };
+
+			// 4. Calculate the new value
+			left = palette[chosenIndex];
+			right = palette[chosenIndex + 1];
+			v = left + ((right-left) * finalRatio);
+
+			// 5. Update the palette and sequence
+			sequence = sequence.add(v);
+			palette = palette.insert(chosenIndex + 1, v);
+		};
+
+		if (chronological) {
+			^sequence
+		} {
+			^palette
 		}
 	}
 

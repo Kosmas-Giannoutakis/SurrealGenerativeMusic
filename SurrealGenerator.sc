@@ -19,11 +19,15 @@ SurrealGenerator {
 		{9} {SurrealAlgorithms.binaryHeap(steps)}
 		{10} {SurrealAlgorithms.entropicGap(steps)}
 		{11} {SurrealAlgorithms.depthWeighted(steps)}
-		// Tier 5: Advanced Mathematical & Modulated
-		{12} {SurrealAlgorithms.trigonometricSurreal(steps)}
-		{13} {SurrealAlgorithms.dyadicWave(steps)}
-		{14} {SurrealAlgorithms.primeHarmonicOscillator(steps)}
-		{15} {SurrealAlgorithms.complexSpiral(steps)};
+		// Tier 5: Advanced Deterministic (Number Theory)
+		{12} {SurrealAlgorithms.riemannZetaSplit(steps)}
+		{13} {SurrealAlgorithms.zetaCantor(steps)}
+		// Tier 6: Modulated & Complex
+		{14} {SurrealAlgorithms.trigonometricSurreal(steps)}
+		{15} {SurrealAlgorithms.dyadicWave(steps)}
+		{16} {SurrealAlgorithms.primeHarmonicOscillator(steps)}
+		{17} {SurrealAlgorithms.complexSpiral(steps)};
+
 
 
         buf = LocalBuf(palette.size);
