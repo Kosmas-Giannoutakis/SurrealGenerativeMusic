@@ -1,11 +1,3 @@
-Of course. You've clearly put a lot of work into the generative side of this project, and the README should absolutely reflect that.
-
-I will take the improved "Part 1" documentation we developed and merge it seamlessly into your existing, more comprehensive README. This gives you the best of both worlds: clear, accurate documentation for the `Surreal` class, integrated with the exciting overview of your `SurrealGenerator`.
-
-Here is the complete, final README file in Markdown.
-
----
-
 # Surreal.sc
 ### Surreal Numbers and Generative Algorithms for SuperCollider
 
