@@ -1,5 +1,5 @@
 // =================================================================
-// Surreal.sc (Definitive Final Version)
+// Surreal.sc (Definitive Final Version - Corrected)
 // =================================================================
 
 Surreal {
@@ -116,18 +116,20 @@ Surreal {
         ^this;
     }
 
-    prValidate {
-        l.do { |leftElement|
-            r.do { |rightElement|
-                if (leftElement >= rightElement) {
-                    Error(
-                        "Invalid Surreal: Found l-element % >= r-element %"
-                        .format(leftElement.asString, rightElement.asString)
-                    ).throw;
-                }
-            }
-        }
-    }
+	prValidate {
+		// Use the non-recursive float-based comparison during validation
+		// to break the recursive cycle during object creation.
+		l.do { |leftElement|
+			r.do { |rightElement|
+				if (leftElement.prCompareByFloat(rightElement) >= 0) {
+					Error(
+						"Invalid Surreal: Found l-element % >= r-element %"
+						.format(leftElement.asString, rightElement.asString)
+					).throw;
+				}
+			}
+		}
+	}
 
     hash { ^hashValue }
 
@@ -147,26 +149,19 @@ Surreal {
 		that = that.asSurreal;
 		if (this.isZero) { ^that }; if (that.isZero) { ^this };
 
-		// --- OPTIMIZATION 1: Integer + Integer ---
 		if (this.isInteger and: { that.isInteger }) {
 			^Surreal.integer(this.asInteger + that.asInteger);
 		};
 
-		// --- OPTIMIZATION 2: Surreal + Integer (The new, crucial optimization) ---
 		if (that.isInteger) {
-			// x + n = { L(x)+n | R(x)+n }
-			// This avoids the massive recursion of the general formula.
 			newL = l.collect(_ + that);
 			newR = r.collect(_ + that);
-			// We still simplify, but the sets are tiny compared to the general case.
 			^Surreal.prSimplifyAndNew(newL, newR);
 		};
-		// Symmetrically, for Integer + Surreal
 		if (this.isInteger) {
-			^that + this; // Just reuse the logic above by swapping the receiver.
+			^that + this;
 		};
 
-		// --- FALLBACK: The general recursive formula for complex cases ---
 		newL = l.collect(_ + that) ++ that.l.collect(this + _);
 		newR = r.collect(_ + that) ++ that.r.collect(this + _);
 		^Surreal.prSimplifyAndNew(newL, newR);
@@ -188,26 +183,22 @@ Surreal {
 		var newL, newR, x, y;
 		that = that.asSurreal;
 
-		// --- BASIC CASES (Corrected) ---
 		if (this.isZero or: { that.isZero }) { ^Surreal.zero };
 		if (this.isOne) { ^that }; if (that.isOne) { ^this };
-		// Corrected logic for multiplying by -1
 		if (this.equals(Surreal.negOne)) { ^that.neg };
 		if (that.equals(Surreal.negOne)) { ^this.neg };
 
-		// --- OPTIMIZATION 1: Integer * Integer ---
 		if (this.isInteger and: { that.isInteger }) {
 			^Surreal.integer(this.asInteger * that.asInteger);
 		};
 
-		// --- OPTIMIZATION 2: Surreal * Integer ---
 		if (that.isInteger) {
-			x = this; y = that; // x is surreal, y is integer
+			x = this; y = that;
 		} {
 			if (this.isInteger) {
-				x = that; y = this; // x is surreal, y is integer
+				x = that; y = this;
 			} {
-				x = nil; // No integer involved
+				x = nil;
 			}
 		};
 
@@ -226,7 +217,6 @@ Surreal {
 			^Surreal.prSimplifyAndNew(newL, newR);
 		};
 
-		// --- FALLBACK: General formula for Surreal * Surreal ---
 		newL = Array.new; newR = Array.new;
 		l.do { |xl| that.l.do { |yl| newL = newL.add((xl*that)+(this*yl)-(xl*yl)) } };
 		r.do { |xr| that.r.do { |yr| newL = newL.add((xr*that)+(this*yr)-(xr*yr)) } };
@@ -235,31 +225,56 @@ Surreal {
 		^Surreal.prSimplifyAndNew(newL, newR);
 	}
 
-    >= { |that|
-        var cacheKey, result;
-        that = that.asSurreal;
-        if (this === that) { ^true };
-        cacheKey = (this.hash.asString ++ "_" ++ that.hash.asString).asSymbol;
-        result = comparisonCache.at(cacheKey);
-        if (result.notNil) { ^result };
-        result =
-            (r.any({ |xr| that >= xr }).not) and: {
-            (that.l.any({ |yl| yl >= this }).not) // CORRECTED RECURSIVE CALL
-        };
-        comparisonCache.put(cacheKey, result);
-        ^result;
-    }
+	>= { |that|
+		var cacheKey, result;
+		that = that.asSurreal;
+		if (this === that) { ^true };
 
-    equals { |that|
-        var other = that.asSurreal;
-        if (other.isNil) { ^false };
-        ^((this === other) or: { (this >= other) and: { (this <= other) } });
-    }
+		cacheKey = (this.hash.asString ++ "_" ++ that.hash.asString).asSymbol;
+		result = comparisonCache.at(cacheKey);
+		if (result.notNil) { ^result };
 
-    <  { |that| ^(this >= that).not }
-    <= { |that| ^(that >= this) }
-    >  { |that| ^((this <= that).not) }
+		result =
+		(r.any({ |xr| that >= xr }).not) and: {
+			(that.l.any({ |yl| yl >= this }).not)
+		};
+
+		comparisonCache.put(cacheKey, result);
+		^result;
+	}
+
+	// ==========================================================
+	// ===== FIXED COMPARISON OPERATORS START HERE ============
+	// ==========================================================
+
+	<= { |that| ^(that >= this) }
+
+	>  { |that|
+		that = that.asSurreal;
+		// a > b is equivalent to (a >= b) AND (a != b), which is (a >= b) and not (a <= b)
+		^((this >= that) and: { (this <= that).not })
+	}
+
+	<  { |that|
+		that = that.asSurreal;
+		// a < b is equivalent to (a <= b) AND (a != b), which is (a <= b) and not (a >= b)
+		^((this <= that) and: { (this >= that).not })
+	}
+
+	equals { |that|
+		var other = that.asSurreal;
+		if (other.isNil) { ^false };
+		// The definition of equality is mutual >= and <=
+		^((this >= other) and: { (this <= other) });
+	}
+
+	// ==========================================================
+	// ===== END OF FIX =========================================
+	// ==========================================================
+
     != { |that| ^(this.equals(that).not) }
+
+	== { |that| ^this.equals(that) }
 
     isZero { ^l.isEmpty and: r.isEmpty }
     isOne { ^this === Surreal.one }
