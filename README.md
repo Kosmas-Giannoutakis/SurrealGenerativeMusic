@@ -139,27 +139,18 @@ This is the creative heart of the library. `SurrealGenerator` uses the 15 built-
 Here we use an algorithm to modulate the frequency of a sine wave.
 
 ```supercollider
-(
-{
-    var sin, gen;
-
-    // Use Algorithm #11 (depthWeighted) to generate 100 points
-    // Read the sequence back at a rate of 20 Hz
-    gen = SurrealGenerator.kr(
-        algorithm: 11,
-        steps: 100,
-        freq: 20,
-        min: 200, // map to a frequency range of 200-800 Hz
-        max: 800,
-        curve: \exp
-    );
-
-    // Use the generator to control the frequency
-    sin = SinOsc.ar(gen, mul: 0.2);
-    // Pan and output the sound
-    Pan2.ar(sin) * -23.dbamp
-}.play;
-)
+(Ndef(\surrealPattern, {
+	var freq=SurrealGenerator.kr(
+		algorithm: 1, 
+		steps: 200, 
+		freq: 20,     // How many new values per second?
+		min: 120, 
+		max: 5500, 
+		curve: \exp
+	)!2;
+	var x=SinOsc.ar(freq);
+	x * -22.dbamp
+}).play)
 ```
 
 ### Audio Rate (`.ar`) Example
@@ -167,26 +158,31 @@ Here we use an algorithm to modulate the frequency of a sine wave.
 Here, the generator itself becomes the oscillator's waveform.
 
 ```supercollider
-(
-{
-    var wave;
-    // Use Algorithm #15 (complexSpiral) with 500 steps
-    // The frequency of the Phasor reading the buffer is controlled by the mouse
-    wave = SurrealGenerator.ar(
-        algorithm: 15,
-        steps: 500,
-		freq: MouseX.kr(20, 2000, 1),
-        min: -1,
-        max: 1
-    );
-
-    // The generator *is* the sound
-    LeakDC.ar(Pan2.ar(wave)) * -23.dbamp;
-}.play;
-)
+(Ndef(\surrealWaveform, {
+	var wave=SurrealGenerator.ar(
+		algorithm: 2,
+		steps: 500,
+		freq: MouseX.kr(20,2000,1),  // What is the fundamental pitch?
+		min: -1,
+		max: 1,
+		curve: \lin
+	)!2;
+	wave * -22.dbamp;
+}).play)
 ```
 
-## The Combinatorial Explosion: A Generative "Cookbook"
+> ### **A Note on the `freq` Argument**
+>
+> It's important to understand that the `freq` argument behaves differently depending on whether you call the control-rate (`.kr`) or audio-rate (`.ar`) method.
+>
+> *   **For `.kr(freq: ...)` (Control Rate):**
+>     The `freq` argument determines the **rate of change** of the control signal. It specifies how many new values from the generated sequence are produced *per second*. A higher `freq` means the pattern will evolve more quickly, stepping through its values faster.
+>     **Analogy:** It functions just like the `freq` argument in `LFNoise0.kr(freq)`, which controls how often a new random value is generated. `SurrealGenerator.kr` produces a new value from its sequence at the specified frequency, creating a "stepped" control signal.
+>
+> *   **For `.ar(freq: ...)` (Audio Rate):**
+>     The `freq` argument determines the **fundamental pitch** of the resulting waveform. It specifies how many times per second the entire sequence (loaded into a buffer) should be read through. It directly controls the perceived pitch of the sound, just like the `freq` argument of a `SinOsc` or `Saw` oscillator.
+
+## A Generative "Cookbook"
 
 Theoretically, you can invent an infinite number of such algorithms. Think of each algorithm as a recipe with a few key ingredients. By changing any one ingredient or combining them in new ways, you create a new recipe.
 

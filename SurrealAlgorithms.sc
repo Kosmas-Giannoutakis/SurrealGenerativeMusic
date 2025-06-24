@@ -80,9 +80,60 @@ SurrealAlgorithms {
 		^if(chronological, sequence, palette);
 	}
 
+
+	// 1.5 Conway's original construction (True Implementation)
+	// NOTE: This Surreal-based algorithm is provided as a theoretical exercise.
+	// Due to the combinatorial explosion inherent in pure Surreal arithmetic,
+	// this method becomes computationally intractable and will fail after a
+	// very small number of steps (typically < 5).
+	// For practical use, please use the fast, Float-based version.
+	*conwayConstructionSurreal { |generationLimit = 4|
+		var numbers = Set.with(Surreal.zero);
+		var newNumbers, allNumbers, minVal, maxVal;
+
+		generationLimit.do { |g|
+			"Generating generation " ++ (g + 1) ++ "...".postln;
+			newNumbers = Set.new;
+			allNumbers = numbers.asArray;
+
+			// Step 1: Create numbers {x | y} for all adjacent pairs x < y.
+			allNumbers.do { |x|
+				allNumbers.do { |y|
+					if (x < y) {
+						// Check if there is no existing number z such that x < z < y
+						var noNumberBetween = allNumbers.every({ |z|
+							(z <= x) or: { z >= y }
+						});
+						if (noNumberBetween) {
+							newNumbers.add(Surreal.new([x], [y]));
+						}
+					}
+				}
+			};
+
+			// Step 2: Find the current minimum and maximum numbers.
+			// The default implementation of minItem/maxItem uses the '<' operator,
+			// which is correctly defined for the Surreal class.
+			minVal = allNumbers.minItem;
+			maxVal = allNumbers.maxItem;
+
+			// Step 3: Create the new extremal numbers { | min } and { max | }.
+			// This generates the next negative and positive integers.
+			newNumbers.add(Surreal.new([], [minVal]));
+			newNumbers.add(Surreal.new([maxVal], []));
+
+			// Step 4: Add all newly created numbers to the main set.
+			numbers.addAll(newNumbers);
+		};
+
+		// Return the final, sorted list of Surreal objects.
+		// The default Array.sort uses the '<' method.
+		^numbers.asArray.sort;
+	}
+
 	// 2. Random gap selection with standard midpoint
 	// Randomly selects gaps between existing points and places new values at their exact midpoints. This creates a uniform subdivision pattern with stochastic selection, maintaining balanced spacing while introducing randomness in the order of refinement.
-    *randomGapMidpoint { |steps = 1000, chronological = true|
+    *randomGapMidpoint { |steps = 100, chronological = true|
         var palette, sequence, index, left, right, v;
         palette = [0.0, 1.0];
         sequence = []; // Array to store the historical sequence
@@ -98,6 +149,41 @@ SurrealAlgorithms {
         };
         ^if(chronological, sequence, palette) // Return based on the argument
     }
+
+	// 2.5 Random Gap Selection with Standard Midpoint (Surreal Version)
+	// Creates exact dyadic rationals at each step.
+	// NOTE: This Surreal-based algorithm is provided as a theoretical exercise.
+	// Due to the combinatorial explosion inherent in pure Surreal arithmetic,
+	// this method becomes computationally intractable and will fail after a
+	// very small number of steps (typically < 5).
+	// For practical use, please use the fast, Float-based version.
+	*randomGapMidpointSurreal { |steps = 4, chronological = true|
+		var palette, sequence, index, left, right, v;
+		var half = Surreal.dyadic(1, 2); // Pre-calculate 1/2 for efficiency
+
+		// Start with Surreal zero and one
+		palette = [Surreal.zero, Surreal.one];
+		sequence = [];
+
+		steps.do { |iter|
+			index = (palette.size - 1).rand;
+			left = palette[index];
+			right = palette[index + 1];
+
+			// Perform arithmetic using the Surreal class.
+			v = (left + right) * half;
+
+			sequence = sequence.add(v);
+			// Palette is guaranteed to remain sorted by inserting at index+1
+			palette = palette.insert(index + 1, v);
+		};
+
+		if (chronological) {
+			^sequence // Returns an Array of Surreal objects
+		} {
+			^palette  // The sorted palette of Surreal objects
+		}
+	}
 
 	// 3. Binary Heap (Priority-Based)
 	// Uses a priority queue system where intervals are weighted by their size and depth. Larger, shallower intervals get higher priority for subdivision. Creates a balanced tree-like refinement pattern that naturally focuses on the most significant gaps first.
@@ -151,6 +237,55 @@ SurrealAlgorithms {
 		}
 	}
 
+	// 3.5 Binary Heap (Priority-Based) (Surreal Version)
+	// We use the fast float-based comparison for the priority queue, as the exact ordering of priorities is less important than performance.
+	// NOTE: This Surreal-based algorithm is provided as a theoretical exercise.
+	// Due to the combinatorial explosion inherent in pure Surreal arithmetic,
+	// this method becomes computationally intractable and will fail after a
+	// very small number of steps (typically < 5).
+	// For practical use, please use the fast, Float-based version.
+	*binaryHeapSurreal { |steps = 4, chronological = true|
+		var intervals, sequence, current, left, right, depth, mid;
+		var priority, leftPriority, rightPriority;
+		var half = Surreal.dyadic(1, 2);
+
+		// [priority(Float), left(Surreal), right(Surreal), depth(Int)]
+		intervals = List[
+			[1.0, Surreal.zero, Surreal.one, 0]
+		];
+		sequence = List.new;
+
+		while { sequence.size < steps and: { intervals.size > 0 } } {
+			// --- THE FIX IS HERE ---
+			// Find the interval (item) for which the priority (item[0]) is the maximum.
+			current = intervals.maxItem({ |item| item[0] });
+
+			intervals.remove(current);
+
+			#priority, left, right, depth = current;
+
+			// Surreal arithmetic for the midpoint
+			mid = (left + right) * half;
+			sequence.add(mid);
+
+			if (sequence.size < steps) {
+				// We use toFloat for priority calculation to avoid slow Surreal subtraction.
+				leftPriority = (mid.toFloat - left.toFloat) * (0.9 ** depth);
+				intervals.add([leftPriority, left, mid, depth + 1]);
+
+				rightPriority = (right.toFloat - mid.toFloat) * (0.9 ** depth);
+				intervals.add([rightPriority, mid, right, depth + 1]);
+			};
+		};
+
+		if (chronological) {
+			^sequence.asArray
+		} {
+			// Sorting at the end requires Surreal's `<` operator.
+			^([Surreal.zero, Surreal.one] ++ sequence).sort; // .sort uses '<' by default
+		}
+	}
+
     // 4. Pendulum Gap
 	// Alternates between two opposing strategies: even iterations target the largest gap for subdivision, while odd iterations target the smallest gap. This creates a pendulum-like behavior that balances between coarse and fine detail, preventing excessive clustering.
 	*generatePendulumGap { |steps = 1000, chronological = true|
@@ -195,6 +330,67 @@ SurrealAlgorithms {
 			sequence = sequence.add(v);
 		};
 		^if(chronological, sequence, palette);
+	}
+
+	// 4.5 Pendulum Gap (Surreal Version)
+	// This algorithm is based on comparing gap sizes. This will be very slow with pure Surreal arithmetic (`right - left`). We make the practical compromise of using `toFloat` to find the min/max gaps, but use pure `Surreal` arithmetic to calculate the new midpoint.
+	// NOTE: This Surreal-based algorithm is provided as a theoretical exercise.
+	// Due to the combinatorial explosion inherent in pure Surreal arithmetic,
+	// this method becomes computationally intractable and will fail after a
+	// very small number of steps (typically < 5).
+	// For practical use, please use the fast, Float-based version.
+	*pendulumGapSurreal { |steps = 4, chronological = true|
+		var palette, sequence, i, left, right, v;
+		var maxGap, maxIndex, minGap, minIndex, minIndices, gap;
+		var half = Surreal.dyadic(1, 2);
+
+		palette = [Surreal.zero, Surreal.one];
+		sequence = [];
+
+		steps.do { |iter|
+			// Even steps: find the LARGEST gap using fast float comparison
+			if (iter.even) {
+				maxGap = -1; maxIndex = 0; i = 0;
+				while { i < (palette.size - 1) } {
+					// Practical compromise: use toFloat for gap size comparison
+					gap = palette[i+1].toFloat - palette[i].toFloat;
+					if (gap > maxGap) { maxGap = gap; maxIndex = i; };
+					i = i + 1;
+				};
+				left = palette[maxIndex];
+				right = palette[maxIndex + 1];
+				// Pure Surreal arithmetic for the new value
+				v = (left + right) * half;
+				palette = palette.insert(maxIndex + 1, v);
+			} {
+				// Odd steps: find the SMALLEST gap using fast float comparison
+				minGap = 2.0; minIndices = []; i = 0;
+				while { i < (palette.size - 1) } {
+					gap = palette[i+1].toFloat - palette[i].toFloat;
+					if (gap < minGap) { minGap = gap; };
+					i = i + 1;
+				};
+				i = 0;
+				while { i < (palette.size - 1) } {
+					gap = palette[i+1].toFloat - palette[i].toFloat;
+					if ((gap - minGap).abs < 1e-9) { minIndices = minIndices.add(i); };
+					i = i + 1;
+				};
+				minIndex = minIndices.choose;
+				left = palette[minIndex];
+				right = palette[minIndex + 1];
+				// Pure Surreal arithmetic for the new value
+				v = (left + right) * half;
+				palette = palette.insert(minIndex + 1, v);
+			};
+			sequence = sequence.add(v);
+		};
+
+		if (chronological) {
+			^sequence
+		} {
+			^palette
+		}
 	}
 
 	// 5. Probabilistic Max Gap
@@ -464,6 +660,59 @@ SurrealAlgorithms {
 		};
 
 		^if(chronological, sequence, palette)
+	}
+
+	// 11.5 Golden Ratio Split (Surreal Version)
+	// Similar to Pendulum Gap, we find the largest gap using floats for speed, but calculate the split using exact Surreal arithmetic. This algorithm produces dyadic rationals if the ratios themselves are dyadic.
+	// NOTE: This Surreal-based algorithm is provided as a theoretical exercise.
+	// Due to the combinatorial explosion inherent in pure Surreal arithmetic,
+	// this method becomes computationally intractable and will fail after a
+	// very small number of steps (typically < 5).
+	// For practical use, please use the fast, Float-based version.
+	*goldenCascadeSurreal { |steps = 1, chronological = true|
+		var palette, sequence, maxGap, maxIndex;
+		var left, right, v, gapsAsFloats;
+
+		// --- FIX IS HERE ---
+		// REMOVE the faulty 'ratios' array.
+		// USE this 'goldenRatios' array, which contains valid dyadic approximations.
+		var goldenRatios = [
+			Surreal.dyadic(98, 256),   // Approximation of 0.382 (~0.3828)
+			Surreal.dyadic(1, 2),        // Exactly 0.5
+			Surreal.dyadic(158, 256)   // Approximation of 0.618 (~0.6171)
+		];
+		var nextRatioIndex = 0;
+
+		palette = [Surreal.zero, Surreal.one];
+		sequence = [];
+
+		steps.do { |iter|
+			// Use the correct array here
+			var ratio = goldenRatios[nextRatioIndex];
+			nextRatioIndex = (nextRatioIndex + 1) % goldenRatios.size;
+
+			// Find largest gap using fast float comparison
+			gapsAsFloats = palette.differentiate.drop(1).collect({ |surrealGap|
+				surrealGap.toFloat // This is a practical compromise
+			});
+			maxGap = gapsAsFloats.maxItem;
+			maxIndex = if(maxGap.isNil) { 0 } { gapsAsFloats.indexOf(maxGap) };
+
+			left = palette[maxIndex];
+			right = palette[maxIndex + 1];
+
+			// Calculate the split using pure Surreal arithmetic
+			v = left + ((right - left) * ratio);
+
+			sequence = sequence.add(v);
+			palette = palette.insert(maxIndex + 1, v);
+		};
+
+		if (chronological) {
+			^sequence
+		} {
+			^palette
+		}
 	}
 
 	// 12. Entropic Gap

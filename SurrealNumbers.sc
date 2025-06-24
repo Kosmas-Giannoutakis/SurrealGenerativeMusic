@@ -48,29 +48,47 @@ Surreal {
         ^newInstance;
     }
 
-    *prSimplifyAndNew { |left, right|
-        var maxL, minR, finalL, finalR;
+	*prSimplifyAndNew { |left, right|
+		var maxL, minR, finalL, finalR, maxL_float, minR_float;
 
-        if (left.isEmpty) {
-            finalL = [];
-        } {
-            maxL = left.inject(left.first, { |currentMax, element|
-                if (element.prCompareByFloat(currentMax) > 0) { element } { currentMax }
-            });
-            finalL = [maxL];
-        };
+		// --- Fast Path (using floats) ---
+		if (left.notEmpty) {
+			maxL = left.inject(left.first, { |max, elem| if(elem.prCompareByFloat(max) > 0) { elem } { max } });
+			maxL_float = maxL.toFloat; // Cache the float value
+			finalL = [maxL];
+		} {
+			finalL = [];
+			maxL_float = -inf; // Sentinel value
+		};
 
-        if (right.isEmpty) {
-            finalR = [];
-        } {
-            minR = right.inject(right.first, { |currentMin, element|
-                if (element.prCompareByFloat(currentMin) < 0) { element } { currentMin }
-            });
-            finalR = [minR];
-        };
+		if (right.notEmpty) {
+			minR = right.inject(right.first, { |min, elem| if(elem.prCompareByFloat(min) < 0) { elem } { min } });
+			minR_float = minR.toFloat; // Cache the float value
+			finalR = [minR];
+		} {
+			finalR = [];
+			minR_float = inf; // Sentinel value
+		};
 
-        ^this.new(finalL, finalR);
-    }
+		// --- Guard Condition ---
+		// If the floats are too close, they are untrustworthy.
+		// The epsilon (1e-9) is a guess; it may need tuning.
+		// Also, if the floats are equal, we must use the pure comparison.
+		if ((minR_float - maxL_float) < 1e-9) {
+			"WARNING: Float precision limit reached. Falling back to slow, pure comparison for simplification.".postln;
+			// --- Slow, Correct Path ---
+			if (left.notEmpty) {
+				maxL = left.maxItem; // Uses pure comparison
+				finalL = [maxL];
+			};
+			if (right.notEmpty) {
+				minR = right.minItem; // Uses pure comparison
+				finalR = [minR];
+			};
+		};
+
+		^this.new(finalL, finalR);
+	}
 
     *prCalculateHashFor { |lArray, rArray|
         var seed = 0;
@@ -149,19 +167,26 @@ Surreal {
 		that = that.asSurreal;
 		if (this.isZero) { ^that }; if (that.isZero) { ^this };
 
+		// --- OPTIMIZATION 1: Integer + Integer ---
 		if (this.isInteger and: { that.isInteger }) {
 			^Surreal.integer(this.asInteger + that.asInteger);
 		};
 
+		// --- OPTIMIZATION 2: Surreal + Integer (The new, crucial optimization) ---
 		if (that.isInteger) {
+			// x + n = { L(x)+n | R(x)+n }
+			// This avoids the massive recursion of the general formula.
 			newL = l.collect(_ + that);
 			newR = r.collect(_ + that);
+			// We still simplify, but the sets are tiny compared to the general case.
 			^Surreal.prSimplifyAndNew(newL, newR);
 		};
+		// Symmetrically, for Integer + Surreal
 		if (this.isInteger) {
-			^that + this;
+			^that + this; // Just reuse the logic above by swapping the receiver.
 		};
 
+		// --- FALLBACK: The general recursive formula for complex cases ---
 		newL = l.collect(_ + that) ++ that.l.collect(this + _);
 		newR = r.collect(_ + that) ++ that.r.collect(this + _);
 		^Surreal.prSimplifyAndNew(newL, newR);
@@ -183,40 +208,48 @@ Surreal {
 		var newL, newR, x, y;
 		that = that.asSurreal;
 
+		// --- BASIC CASES (Corrected) ---
 		if (this.isZero or: { that.isZero }) { ^Surreal.zero };
 		if (this.isOne) { ^that }; if (that.isOne) { ^this };
 		if (this.equals(Surreal.negOne)) { ^that.neg };
 		if (that.equals(Surreal.negOne)) { ^this.neg };
 
+		// --- OPTIMIZATION 1: Integer * Integer ---
 		if (this.isInteger and: { that.isInteger }) {
 			^Surreal.integer(this.asInteger * that.asInteger);
 		};
 
+		// --- OPTIMIZATION 2: Surreal * Integer ---
+		// First, figure out which one is the surreal (x) and which is the integer (y)
 		if (that.isInteger) {
-			x = this; y = that;
+			x = this; y = that; // x is surreal, y is integer
 		} {
 			if (this.isInteger) {
-				x = that; y = this;
+				x = that; y = this; // x is surreal, y is integer
 			} {
-				x = nil;
+				x = nil; // No integer involved, will use fallback
 			}
 		};
 
+		// If we found an integer to multiply by...
 		if (x.notNil) {
-			if (y.asInteger > 0) {
-				if (x >= Surreal.zero) {
+			if (y.asInteger > 0) { // Case 1: Multiply by positive integer
+				if (x >= Surreal.zero) { // Subcase 1a: x >= 0
 					newL = x.l.collect({|xl| xl * y});
 					newR = x.r.collect({|xr| xr * y});
-				} {
+				} { // Subcase 1b: x < 0
 					newL = x.r.collect({|xr| xr * y});
 					newR = x.l.collect({|xl| xl * y});
 				}
-			} {
+			} { // Case 2: Multiply by negative integer
+				// Use the identity: x*y = -(x*(-y))
 				^((x * y.neg).neg);
 			};
 			^Surreal.prSimplifyAndNew(newL, newR);
 		};
 
+
+		// --- FALLBACK: General formula for Surreal * Surreal ---
 		newL = Array.new; newR = Array.new;
 		l.do { |xl| that.l.do { |yl| newL = newL.add((xl*that)+(this*yl)-(xl*yl)) } };
 		r.do { |xr| that.r.do { |yr| newL = newL.add((xr*that)+(this*yr)-(xr*yr)) } };
@@ -242,10 +275,6 @@ Surreal {
 		comparisonCache.put(cacheKey, result);
 		^result;
 	}
-
-	// ==========================================================
-	// ===== FIXED COMPARISON OPERATORS START HERE ============
-	// ==========================================================
 
 	<= { |that| ^(that >= this) }
 
