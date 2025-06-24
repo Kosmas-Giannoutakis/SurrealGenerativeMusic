@@ -1,0 +1,248 @@
+TITLE:: Surreal
+summary:: An implementation of John Conway's Surreal Number system.
+categories:: Number, Generative
+related:: Classes/SurrealGenerator, Classes/SurrealAlgorithms, Classes/Integer, Classes/Float
+
+DESCRIPTION::
+The Surreal class provides a formal, performant implementation of John Conway's Surreal Number system. Surreal numbers are a vast number system built from a simple recursive rule: every number `x` is defined by two sets of previously created numbers, a Left set `L` and a Right set `R`, written as `x = { L | R }`.
+
+The fundamental rule is that no member of the Left set can be greater than or equal to any member of the Right set. This definition is powerful enough to construct all integers, dyadic rationals (fractions with a power-of-two denominator), and an incredible landscape of other "exotic" numbers.
+
+A key concept is the distinction between a number's *value* and its *form*. For example, the canonical integer `1` is `{ 0 | }`, but the expression `2 * 0.5` might result in the form `{ 0 | 2 }`. While both have the same numerical value (1.0), this class preserves their distinct internal structures.
+
+
+First code examples:
+
+code::
+// Create the fundamental numbers
+s.zero = Surreal.zero;
+s.one = Surreal.one;
+s.negOne = Surreal.negOne;
+s.half = Surreal.dyadic(1, 2); // { 0 | 1 }
+
+// Perform some arithmetic
+s.result = s.one + s.half;
+
+// See the resulting form and its float value
+s.result.asString.postln; // -> "{ 1 | 2 }" (the form of 1.5)
+s.result.toFloat.postln;   // -> 1.5
+::
+
+CLASSMETHODS::
+
+METHOD:: new
+The main constructor. Creates a new surreal number from its Left and Right sets. It ensures that only one instance of any given form exists.
+argument:: left
+An array of Surreal numbers for the Left set.
+argument:: right
+An array of Surreal numbers for the Right set.
+
+METHOD:: integer
+A convenience method for creating a canonical surreal integer. This is the preferred way to create integers.
+argument:: val
+The integer value to create.
+
+METHOD:: dyadic
+Creates a surreal number representing a dyadic rational (a fraction `num/den` where `den` is a power of two).
+argument:: num
+The numerator.
+argument:: den
+The denominator, which must be a power of two.
+
+METHOD:: zero
+Returns the canonical surreal number for 0, which is `{ | }`.
+
+METHOD:: one
+Returns the canonical surreal number for 1, which is `{ 0 | }`.
+
+METHOD:: negOne
+Returns the canonical surreal number for -1, which is `{ | 0 }`.
+
+METHOD:: clearCaches
+Utility method. Clears all internal caches. For debugging or memory management, not for general use.
+
+METHOD:: initClass
+Internal method called by SuperCollider on compilation. Not for general use.
+
+METHOD:: prSimplifyAndNew
+Internal method for simplifying and creating numbers. Not for general use.
+argument:: left
+argument:: right
+
+METHOD:: prNewInternal
+Internal constructor helper. Not for general use.
+argument:: lArray
+argument:: rArray
+argument:: aHash
+argument:: bucket
+
+METHOD:: prCalculateHashFor
+Internal method for hashing. Not for general use.
+argument:: lArray
+argument:: rArray
+
+METHOD:: existingSurreals
+Internal cache. Not for general use.
+
+METHOD:: comparisonCache
+Internal cache. Not for general use.
+
+METHOD:: negationCache
+Internal cache. Not for general use.
+
+METHOD:: integerCache
+Internal cache. Not for general use.
+
+METHOD:: integerReverseCache
+Internal cache. Not for general use.
+
+METHOD:: floatCache
+Internal cache. Not for general use.
+
+
+INSTANCEMETHODS::
+
+METHOD:: +
+Performs addition.
+argument:: that
+The Surreal number to add.
+
+METHOD:: -
+Performs subtraction.
+argument:: that
+The Surreal number to subtract.
+
+METHOD:: *
+Performs multiplication.
+argument:: that
+The Surreal number to multiply by.
+
+METHOD:: neg
+Performs negation.
+
+METHOD:: <
+Returns true if this number is strictly less than `that`.
+argument:: that
+The Surreal number to compare against.
+
+METHOD:: <=
+Returns true if this number is less than or equal to `that`.
+argument:: that
+The Surreal number to compare against.
+
+METHOD:: >
+Returns true if this number is strictly greater than `that`.
+argument:: that
+The Surreal number to compare against.
+
+METHOD:: >=
+Returns true if this number is greater than or equal to `that`.
+argument:: that
+The Surreal number to compare against.
+
+METHOD:: ==
+Checks for equality of *value*. Returns true if two numbers have the same numerical value, even if their forms differ.
+argument:: that
+The Surreal number to compare against.
+
+METHOD:: equals
+An alias for `==`.
+argument:: that
+The Surreal number to compare against.
+
+METHOD:: !=
+Checks for inequality of *value*.
+argument:: that
+The Surreal number to compare against.
+
+METHOD:: toFloat
+Converts the surreal number to its closest floating-point approximation.
+
+METHOD:: asString
+Returns a string representation of the number's *form*, e.g., `"{ 0 | 1 }"`.
+argument:: maxDepth
+(optional) The maximum recursive depth to print. Defaults to 3.
+
+METHOD:: asInteger
+If the number is a canonical integer, returns the Integer value. Otherwise, returns nil.
+
+METHOD:: asSurreal
+Returns the object itself, allowing for polymorphic use.
+
+METHOD:: isZero
+Returns true if the number is `{ | }`.
+
+METHOD:: isOne
+Returns true if the number is the canonical integer 1.
+
+METHOD:: isInteger
+Returns true if the number was created as a canonical integer.
+
+METHOD:: generation
+Returns the "birthday" or generation of the number (the step at which it was created in Conway's construction).
+
+METHOD:: l
+Returns the Left set (an Array of Surreal numbers).
+
+METHOD:: r
+Returns the Right set (an Array of Surreal numbers).
+
+METHOD:: hash
+Internal method. Returns the hash value of the object.
+
+METHOD:: hashValue
+Internal method. Instance variable accessor for the cached hash.
+
+METHOD:: isIdenticalTo
+Internal method. Checks if two surreal objects have the exact same form (i.e., identical Left and Right sets). This is stricter than `==`.
+argument:: otherL
+argument:: otherR
+
+METHOD:: printOn
+Internal method for printing to the post window.
+argument:: stream
+argument:: maxDepth
+argument:: currentDepth
+
+METHOD:: init
+Internal method for initialization. Not for general use.
+argument:: left
+argument:: right
+argument:: aHash
+
+METHOD:: prBuildString
+Internal helper for `asString`.
+argument:: maxDepth
+argument:: currentDepth
+
+METHOD:: prValidate
+Internal validation helper. Not for general use.
+
+METHOD:: prCompareByFloat
+Internal comparison helper. Not for general use.
+argument:: that
+
+
+EXAMPLES::
+
+Form vs. Value
+
+The Surreal class distinguishes between a number's canonical form and its value. The expression `2 * 0.5` has a value of 1, but its form is different from the canonical integer 1.
+
+code::
+// Create the canonical integer 1
+~canonicalOne = 1.i;
+
+// Create a different form of 1 via multiplication
+~formOfOne = 2.i * 0.5.asSurreal;
+
+// Their string representations show their different forms
+~canonicalOne.asString.postln; // -> "1"
+~formOfOne.asString.postln;    // -> "{ 0 | 2 }"
+
+// However, their numerical values are equal
+(~canonicalOne == ~formOfOne).postln; // -> true
+
+// And their float approximations are the same
+~formOfOne.toFloat.postln; // -> 1.0
+::

@@ -1,0 +1,276 @@
+TITLE:: SurrealAlgorithms
+summary:: A collection of generative algorithms for creating musical palettes and sequences.
+categories:: Generative, Algorithms
+related:: Classes/SurrealGenerator, Classes/Surreal, Classes/Pbind
+
+DESCRIPTION::
+SurrealAlgorithms is a static library class that contains 17 unique generative algorithms. This class acts as the "generative cookbook" for the project, allowing you to directly create arrays of floating-point numbers (called "palettes" or "sequences") for any purpose.
+
+Each algorithm generates a sequence of numbers, typically in the range of 0.0 to 1.0, by iteratively placing new points in the "gaps" between existing ones. They differ in their **Selection Strategy** (how they choose a gap) and their **Placement Rule** (how they calculate the new point's value).
+
+Directly calling these methods is a powerful way to integrate this library with SuperCollider's patterns (`Pbind`), buffer manipulation, and wavetable synthesis.
+
+Most methods have a `chronological` argument that significantly changes the output:
+LIST::
+## `chronological: true` (the default for most) returns the sequence of values *in the order they were created*. This is excellent for generating evolving melodies or rhythmic patterns that have a narrative structure.
+## `chronological: false` returns the final, sorted "palette" of all generated points. This is useful for creating a static collection of pitches, durations, or other musical materials that can be sequenced or selected from.
+::
+
+CLASSMETHODS::
+
+METHOD:: conwayConstruction
+(Algorithm 1: Foundational & Deterministic) The original, canonical method for generating surreal numbers. It exhaustively creates all dyadic rationals generation by generation (e.g., all fourths, then all eighths).
+argument:: steps
+The number of values to generate.
+argument:: chronological
+If true, returns the sequence in creation order; if false, returns the final sorted palette.
+
+METHOD:: generatePendulumGap
+(Algorithm 2: Foundational & Deterministic) A deterministic strategy that creates a balanced rhythm. On even steps, it picks the largest gap to subdivide. On odd steps, it picks the smallest gap.
+argument:: steps
+argument:: chronological
+
+METHOD:: goldenCascade
+(Algorithm 3: Foundational & Deterministic) Creates aesthetically pleasing, self-similar distributions by always splitting the largest gap according to a rotating cycle of golden ratios (0.382, 0.5, and 0.618).
+argument:: steps
+argument:: chronological
+
+METHOD:: randomGapMidpoint
+(Algorithm 4: Simple Stochastic) The simplest stochastic subdivision. It picks any available gap with equal probability and places the new point at the exact midpoint.
+argument:: steps
+argument:: chronological
+
+METHOD:: biasMidpoint
+(Algorithm 5: Simple Stochastic) A variation of random gap selection that introduces asymmetry. It places new points with a 3:1 bias towards the left boundary of the gap, causing points to drift.
+argument:: steps
+argument:: chronological
+
+METHOD:: groundedMidpoint
+(Algorithm 6: Simple Stochastic) Creates a "gravitational pull" towards zero. With a given probability, it places the new point by anchoring to the left boundary (`left * 0.5`) instead of the gap's midpoint.
+argument:: steps
+argument:: anchorProb
+The probability (0.0 to 1.0) of using the "grounded" placement rule.
+argument:: chronological
+
+METHOD:: randomPairInterpolation
+(Algorithm 7: Simple Stochastic) More chaotic than gap-based methods. It selects two random, not-necessarily-adjacent points from the entire palette and places a new point at a random spot between them.
+argument:: steps
+argument:: chronological
+
+METHOD:: probabilisticMaxGap
+(Algorithm 8: Probabilistic & Weighted) A classic generative algorithm that produces natural-looking distributions. The probability of a gap being chosen is proportional to its size, favoring larger gaps.
+argument:: steps
+argument:: bias
+An exponent applied to the gap size. Higher values create a stronger preference for larger gaps.
+argument:: chronological
+
+METHOD:: binaryHeap
+(Algorithm 9: State-Driven & Hierarchical) Uses a priority queue to create a balanced, tree-like refinement. It chooses the interval with the highest priority, calculated from its size and generation depth.
+argument:: steps
+argument:: chronological
+
+METHOD:: entropicGap
+(Algorithm 10: State-Driven & Hierarchical) Simulates diffusion by creating clusters of activity. It boosts the selection probability of gaps that are adjacent to recently split gaps.
+argument:: steps
+argument:: chronological
+argument:: memory
+The number of recent splits to remember for boosting neighbors.
+
+METHOD:: depthWeighted
+(Algorithm 11: State-Driven & Hierarchical) Creates complex, hierarchical branching. It uses the generation "depth" of a gap's boundaries to influence both gap selection and the split point calculation.
+argument:: steps
+argument:: chronological
+argument:: gapBias
+An exponent controlling the preference for selecting larger gaps. Higher values (>1.0) make the algorithm focus almost exclusively on the largest gaps, while lower values (<1.0) flatten the probability, giving smaller gaps a greater chance.
+argument:: depthBias
+A factor that controls how much the "age" (generation depth) of a gap's boundaries influences the placement of the new point. A non-zero bias will push the new point away from the newer boundary and towards the older one, creating more tree-like, hierarchical structures.
+
+METHOD:: riemannZetaSplit
+(Algorithm 12: Advanced Deterministic) Derives its split logic from the Euler product formula for the Riemann Zeta function. The split ratio is determined by the formula `(1 - p^-s)`, where `p` cycles through the prime numbers.
+argument:: steps
+argument:: chronological
+argument:: s
+The exponent used in the zeta formula (must be > 1.0).
+argument:: primeOffset
+An offset into the internal prime number list.
+argument:: splitMode
+A Symbol, e.g., `\prime` or `\alternating`, to control split direction.
+argument:: s_drift
+Causes the 's' parameter to evolve based on the current prime.
+
+METHOD:: zetaCantor
+(Algorithm 13: Advanced Deterministic) The flagship deterministic generator. It balances the desire to split large gaps with the desire to split gaps near a specific "point of interest."
+argument:: steps
+argument:: chronological
+argument:: s
+The zeta exponent, controlling split asymmetry.
+argument:: primeOffset
+argument:: gap_bias
+How much to prefer large gaps.
+argument:: phi_bias
+How much to prefer gaps located near the `phi_factor`.
+argument:: phi_factor
+The location of the "point of interest" that the `phi_bias` is attracted to. Defaults to the golden ratio (0.618...), but can be set to any value to cause the algorithm to generate intricate detail around that point.
+
+METHOD:: trigonometricSurreal
+(Algorithm 14: Modulated & Complex) Creates wave-like patterns by always picking the largest gap and modulating the split point with a sine wave that evolves over time and depth.
+argument:: steps
+argument:: chronological
+argument:: phaseStep
+Controls the overall speed of the sine wave's evolution. It is the amount the phase advances with each new point generated.
+argument:: frequency
+A multiplier applied to the generation depth, creating a higher-frequency oscillation within the main wave. This adds harmonic complexity, as newer points will oscillate at a different rate than older ones.
+argument:: amplitude
+The depth or intensity of the sine wave's modulation. A value of 0 means no modulation (midpoint splitting), while higher values cause the split point to swing more widely.
+
+METHOD:: dyadicWave
+(Algorithm 15: Modulated & Complex) Creates wave-like density variations by using a sine wave to modulate both gap selection probability and the split position.
+argument:: steps
+argument:: chronological
+argument:: freq
+The amount the sine wave's phase advances with each iteration, controlling the speed of the density wave.
+argument:: ratio
+The base split point around which the sine wave modulates. For example, a ratio of 0.5 means the modulation is centered on the midpoint of the gap.
+
+METHOD:: primeHarmonicOscillator
+(Algorithm 16: Modulated & Complex) Generates musically-structured patterns using harmonic relationships between prime numbers to guide subdivision.
+argument:: steps
+argument:: chronological
+argument:: phaseStep
+The speed of the trigonometric modulation's evolution per step.
+argument:: harmonicScale
+An exponent applied to the prime number assigned to each gap. It controls how much influence a prime's size has on the gap's selection priority, tuning the "harmonic weight" in the selection process.
+
+METHOD:: complexSpiral
+(Algorithm 17: Modulated & Complex) The most conceptually distinct algorithm. It operates in the 2D complex plane, finding the largest *angular* gap to create spiral patterns.
+argument:: steps
+argument:: chronological
+argument:: spiralFactor
+Controls how quickly the spiral moves inwards (< 1.0) or outwards (> 1.0).
+argument:: angleOffset
+A constant rotational offset (in radians) added to every new point, causing the entire spiral structure to twist as it grows.
+argument:: placementRatio
+The fundamental rule for where to place a new point within an angular gap. A value of 0.5 places it in the middle of the angle; 0.618 places it at the golden ratio of the angle.
+argument:: magnitudeMode
+A Symbol (`\avg`, `\randBlend`, etc.) to control the magnitude of new points.
+argument:: chaos
+
+Theoretical (Surreal-based) Methods
+
+The following methods use pure `Surreal` class arithmetic. Due to the combinatorial explosion inherent in these calculations, they become computationally intractable after a very small number of steps (typically < 5) and are not suitable for real-time use. They are provided as educational examples of the underlying theory.
+
+METHOD:: conwayConstructionSurreal
+argument:: generationLimit
+
+METHOD:: randomGapMidpointSurreal
+argument:: steps
+argument:: chronological
+
+METHOD:: binaryHeapSurreal
+argument:: steps
+argument:: chronological
+
+METHOD:: pendulumGapSurreal
+argument:: steps
+argument:: chronological
+
+METHOD:: goldenCascadeSurreal
+argument:: steps
+argument:: chronological
+
+
+EXAMPLES::
+
+1. Mapping a Palette to a Musical Scale
+
+You can generate a sorted palette of values and use `Pbind` to map them to the notes of a scale.
+
+code::
+(
+// Generate a 12-note palette using the Golden Cascade algorithm
+~palette = SurrealAlgorithms.goldenCascade(12, chronological: false);
+
+// See the generated values
+~palette.postln;
+
+p = Pbind(
+	\instrument, \default,
+	// Use Pseq to cycle through the palette
+	\degree, Pseq(~palette, inf)
+		// Map the 0-1 range to scale degrees 0 through 14
+		.linlin(0.0, 1.0, 0, 14)
+		.round,
+	\scale, Scale.minorPentatonic,
+	\dur, 0.25,
+	\amp, 0.1
+).play;
+)
+
+p.stop;
+::
+
+2. Creating a Custom Wavetable for Synthesis
+
+Generate a chronological sequence and load it into a Buffer to use as a unique oscillator waveform.
+
+code::
+(
+s.waitForBoot {
+	var steps = 1024;
+	var sequence;
+
+	// 1. Generate the sequence
+	sequence = SurrealAlgorithms.zetaCantor(steps: steps, chronological: true);
+
+	// 2. Remap to bipolar (-1 to 1) for use as a waveform
+	sequence = sequence.linlin(0.0, 1.0, -1.0, 1.0);
+
+	// 3. Use Buffer.loadCollection.
+	// This allocates and fills the buffer in one step, and provides a
+	// completion action that runs ONLY after the data is loaded.
+	Buffer.loadCollection(s, sequence, 1, action: { |buf|
+		// We get the new buffer as an argument to the action function.
+		// Let's store it in our environment variable ~buf.
+		~buf = buf;
+
+		"Buffer loaded, starting synth...".postln; // For confirmation
+
+		x = {
+			var osc, freq;
+			freq = MouseX.kr(50, 800, 1); // warp: 1 for exponential
+			osc = Osc.ar(~buf, freq, 0, 0.25);
+			Pan2.ar(osc, MouseY.kr(-1, 1));
+		}.play;
+	});
+};
+)
+
+
+x.release;
+~buf.free;
+::
+
+3. Generating Rhythmic Durations from Gaps
+
+A powerful technique is to generate a palette and then use the *gaps between the values* as a source for musical durations.
+
+code::
+(
+// Generate a palette with a natural, uneven distribution
+~palette = SurrealAlgorithms.probabilisticMaxGap(steps: 20, bias: 2.0, chronological: false);
+
+// Get the sizes of the gaps by differentiating the sorted palette
+~durations = ~palette.differentiate.postln;
+
+p = Pbind(
+	\instrument, \default,
+	\degree, 0,
+	\octave, 6,
+	// Use the calculated gaps as durations
+	\dur, Pseq(~durations, inf) * 4, // Multiply to make them longer
+	\amp, 0.2
+).play;
+)
+
+p.stop;
+::

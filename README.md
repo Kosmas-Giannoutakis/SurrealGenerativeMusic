@@ -141,7 +141,7 @@ Here we use an algorithm to modulate the frequency of a sine wave.
 ```supercollider
 (Ndef(\surrealPattern, {
 	var freq=SurrealGenerator.kr(
-		algorithm: 1, 
+		algorithm: 1, // change the algorithm number to get a different surreal pattern
 		steps: 200, 
 		freq: 20,     // How many new values per second?
 		min: 120, 
@@ -160,7 +160,7 @@ Here, the generator itself becomes the oscillator's waveform.
 ```supercollider
 (Ndef(\surrealWaveform, {
 	var wave=SurrealGenerator.ar(
-		algorithm: 2,
+		algorithm: 2,  // change the algorithm number to get a different surreal waveform
 		steps: 500,
 		freq: MouseX.kr(20,2000,1),  // What is the fundamental pitch?
 		min: -1,

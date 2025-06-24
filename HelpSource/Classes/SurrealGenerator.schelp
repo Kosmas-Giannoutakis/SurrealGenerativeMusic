@@ -1,0 +1,109 @@
+TITLE:: SurrealGenerator
+summary:: A user-friendly tool for generating musical signals from Surreal Algorithms.
+categories:: Generative, UGens
+related:: Classes/SurrealAlgorithms, Classes/Ndef, Classes/SinOsc
+
+DESCRIPTION::
+SurrealGenerator is the primary user-facing class for turning the generative sequences from LINK::Classes/SurrealAlgorithms:: into audible sound or musical control signals.
+
+It works by first generating a complete number sequence from a chosen algorithm and loading it into a buffer. It then reads back from this buffer using a `Phasor` and `BufRd` to create a continuous signal. This class provides two main methods for this purpose: `.kr` for control-rate signals and `.ar` for audio-rate signals.
+
+A crucial point of understanding is the behavior of the `freq` argument, which differs significantly between the two methods:
+LIST::
+## In `.kr(freq: ...)` the `freq` argument determines the **rate of change** of the control signal, specifying how many new values from the generated sequence are produced per second.
+## In `.ar(freq: ...)` the `freq` argument determines the **fundamental pitch** of the resulting waveform, specifying how many times per second the entire sequence should be read through.
+::
+
+CLASSMETHODS::
+
+METHOD:: kr
+Generates a control-rate signal. This is ideal for modulating synthesis parameters like frequency, amplitude, or filter cutoff.
+
+argument:: algorithm
+An integer from 1 to 17 selecting the generative algorithm to use. Defaults to 1.
+argument:: steps
+The number of values to generate for the sequence. Higher numbers create longer, more complex patterns. Defaults to 200.
+argument:: freq
+The rate of change. This determines how many new values from the sequence are produced per second. Defaults to 1.
+argument:: min
+The minimum value of the output range. Defaults to 0.
+argument:: max
+The maximum value of the output range. Defaults to 1.
+argument:: curve
+The curve shape for mapping the output. Can be a Symbol like `\lin`, `\exp`, or a number. Defaults to `\lin`.
+argument:: interpolation
+The type of interpolation used when reading from the internal buffer. 1 = no interpolation, 2 = linear, 4 = cubic. Defaults to 1 (no interpolation).
+
+METHOD:: ar
+Generates an audio-rate signal. This treats the generated sequence as a unipolar wavetable, turning the generator itself into an oscillator. The output should be mapped to a bipolar range (e.g., -1 to 1) for use as a standard waveform.
+
+argument:: algorithm
+An integer from 1 to 17 selecting the generative algorithm to use. Defaults to 1.
+argument:: steps
+The number of values to generate for the sequence. This defines the resolution of the wavetable. Defaults to 200.
+argument:: freq
+The fundamental pitch of the resulting waveform. This controls how many times per second the entire sequence is read through. Defaults to 1.
+argument:: min
+The minimum value of the output waveform. Defaults to -1.
+argument:: max
+The maximum value of the output waveform. Defaults to 1.
+argument:: curve
+The curve shape for mapping the output. Defaults to `\lin`.
+argument:: interpolation
+The type of interpolation used. For audio signals, linear (2) or cubic (4) is recommended to reduce aliasing. Defaults to 2 (linear).
+
+
+EXAMPLES::
+
+1. Modulating Filter Cutoff Frequency at Control Rate (.kr)
+
+code::
+(
+// Define a noisy synth to be modulated
+Ndef(\noisy, {
+	var sig;
+	// A control signal generating 5 new values per second
+	// from the "Entropic Gap" algorithm.
+	var cutoff = SurrealGenerator.kr(
+		algorithm: 10,
+		steps: 150,
+		freq: 5,
+		min: 500,
+		max: 4000,
+		curve: \exp
+	);
+	sig = Saw.ar([100, 101.3]);
+	// Apply the modulation to a low-pass filter
+	sig = RLPF.ar(sig, cutoff, 0.1);
+	Pan2.ar(sig, 0, 0.2);
+}).play;
+)
+
+// Stop the sound
+Ndef(\noisy).stop;
+::
+
+
+2. Using the Generator as an Audio Rate Oscillator (.ar)
+
+code::
+(
+Ndef(\waveform, {
+	var sig;
+	// Use the "Complex Spiral" algorithm to generate a wavetable
+	// with 1024 steps.
+	sig = SurrealGenerator.ar(
+		algorithm: 17,
+		steps: 1024,
+		// MouseX controls the pitch. warp: 1 is exponential.
+		freq: MouseX.kr(50, 500, 1),
+		min: -1, // Ensure output is bipolar for audio
+		max: 1
+	);
+	Pan2.ar(sig, 0, 0.25);
+}).play;
+)
+
+// Stop the sound
+Ndef(\waveform).stop;
+::
