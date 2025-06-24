@@ -1,7 +1,7 @@
 # Surreal.sc
 ### Surreal Numbers and Generative Algorithms for SuperCollider
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![alt text](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
 **Surreal.sc** is a dual-purpose SuperCollider library. It provides:
 
@@ -334,4 +334,4 @@ This project is open to new ideas! If you invent a new generative algorithm base
 
 ## License
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the GNU General Public License v3.0. See the [LICENSE](LICENSE) file for details.
