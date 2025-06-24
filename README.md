@@ -6,7 +6,7 @@
 **Surreal.sc** is a dual-purpose SuperCollider library. It provides:
 
 1.  A formal, performant implementation of **John Conway's Surreal Numbers**, allowing for the creation and manipulation of integers, dyadic rationals, and other exotic numbers within the recursive `{L|R}` structure.
-2.  A powerful creative toolkit, `SurrealGenerator`, which uses the principles of surreal construction as a launchpad for **15 unique generative algorithms**. These algorithms can create complex, musical sequences for use in real-time synthesis and composition.
+2.  A powerful creative toolkit, `SurrealGenerator`, which uses the principles of surreal construction as a launchpad for **17 unique generative algorithms**. These algorithms can create complex, musical sequences for use in real-time synthesis and composition.
 
 This project is for mathematicians, computer musicians, and creative coders who are interested in exploring the boundary between abstract mathematics and generative art.
 
