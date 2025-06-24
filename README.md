@@ -177,7 +177,7 @@ Here, the generator itself becomes the oscillator's waveform.
 >
 > *   **For `.kr(freq: ...)` (Control Rate):**
 >     The `freq` argument determines the **rate of change** of the control signal. It specifies how many new values from the generated sequence are produced *per second*. A higher `freq` means the pattern will evolve more quickly, stepping through its values faster.
->     **Analogy:** It functions just like the `freq` argument in `LFNoise0.kr(freq)`, which controls how often a new random value is generated. `SurrealGenerator.kr` produces a new value from its sequence at the specified frequency, creating a "stepped" control signal.
+>     **Analogy:** It functions just like the `freq` argument in `LFNoise0.kr(freq)`, which controls how often a new random value is generated.
 >
 > *   **For `.ar(freq: ...)` (Audio Rate):**
 >     The `freq` argument determines the **fundamental pitch** of the resulting waveform. It specifies how many times per second the entire sequence (loaded into a buffer) should be read through. It directly controls the perceived pitch of the sound, just like the `freq` argument of a `SinOsc` or `Saw` oscillator.
