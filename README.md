@@ -132,7 +132,7 @@ This distinction between a number's canonical form and its value is a key concep
 
 ## Part 2: Generative Music with `SurrealGenerator`
 
-This is the creative heart of the library. `SurrealGenerator` uses the 15 built-in algorithms to produce number sequences, which are loaded into a buffer and read back as a control or audio signal.
+This is the creative heart of the library. `SurrealGenerator` uses the 17 built-in algorithms to produce number sequences, which are loaded into a buffer and read back as a control or audio signal.
 
 ### Control Rate (`.kr`) Example
 
@@ -176,8 +176,7 @@ Here, the generator itself becomes the oscillator's waveform.
 > It's important to understand that the `freq` argument behaves differently depending on whether you call the control-rate (`.kr`) or audio-rate (`.ar`) method.
 >
 > *   **For `.kr(freq: ...)` (Control Rate):**
->     The `freq` argument determines the **rate of change** of the control signal. It specifies how many new values from the generated sequence are produced *per second*. A higher `freq` means the pattern will evolve more quickly, stepping through its values faster.
->     **Analogy:** It functions just like the `freq` argument in `LFNoise0.kr(freq)`, which controls how often a new random value is generated.
+>     The `freq` argument determines the **rate of change** of the control signal. It specifies how many new values from the generated sequence are produced *per second*. A higher `freq` means the pattern will evolve more quickly, stepping through its values faster. It functions just like the `freq` argument in `LFNoise0.kr(freq)`, which controls how often a new random value is generated.
 >
 > *   **For `.ar(freq: ...)` (Audio Rate):**
 >     The `freq` argument determines the **fundamental pitch** of the resulting waveform. It specifies how many times per second the entire sequence (loaded into a buffer) should be read through. It directly controls the perceived pitch of the sound, just like the `freq` argument of a `SinOsc` or `Saw` oscillator.
