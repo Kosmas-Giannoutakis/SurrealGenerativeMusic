@@ -25,6 +25,8 @@ argument:: steps
 The number of values to generate for the sequence. Higher numbers create longer, more complex patterns. Defaults to 200.
 argument:: freq
 The rate of change. This determines how many new values from the sequence are produced per second. Defaults to 1.
+argument:: phase
+The initial phase offset for reading the buffer, expressed as a fraction of the total cycle (0 to 1). A phase of 0.5 starts reading from the middle of the generated sequence. Defaults to 0.
 argument:: min
 The minimum value of the output range. Defaults to 0.
 argument:: max
@@ -43,6 +45,8 @@ argument:: steps
 The number of values to generate for the sequence. This defines the resolution of the wavetable. Defaults to 200.
 argument:: freq
 The fundamental pitch of the resulting waveform. This controls how many times per second the entire sequence is read through. Defaults to 1.
+argument:: phase
+The initial phase offset for reading the buffer, expressed as a fraction of the total cycle (0 to 1). A phase of 0.5 starts reading from the middle of the generated sequence. Defaults to 0.
 argument:: min
 The minimum value of the output waveform. Defaults to -1.
 argument:: max

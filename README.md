@@ -144,6 +144,7 @@ Here we use an algorithm to modulate the frequency of a sine wave.
 		algorithm: 1, // change the algorithm number to get a different surreal pattern
 		steps: 200, 
 		freq: 20,     // How many new values per second?
+		phase: 0,
 		min: 120, 
 		max: 5500, 
 		curve: \exp
@@ -163,6 +164,7 @@ Here, the generator itself becomes the oscillator's waveform.
 		algorithm: 2,  // change the algorithm number to get a different surreal waveform
 		steps: 500,
 		freq: MouseX.kr(20,2000,1),  // What is the fundamental pitch?
+		phase: 0,
 		min: -1,
 		max: 1,
 		curve: \lin
