@@ -183,6 +183,77 @@ Here, the generator itself becomes the oscillator's waveform.
 > *   **For `.ar(freq: ...)` (Audio Rate):**
 >     The `freq` argument determines the **fundamental pitch** of the resulting waveform. It specifies how many times per second the entire sequence (loaded into a buffer) should be read through. It directly controls the perceived pitch of the sound, just like the `freq` argument of a `SinOsc` or `Saw` oscillator.
 
+
+## Part 3: Direct Use with Patterns (`SurrealAlgorithms`)
+
+While `SurrealGenerator` is great for continuous signals, you can unlock far more flexibility by calling the methods in `SurrealAlgorithms` directly. This generates standard `Array`s that can be used with SuperCollider's patterns (`Pbind`), buffers, and any other part of the language.
+
+The `chronological` argument is key:
+- **`chronological: true`** (the default) returns the sequence of values in the order they were created. This is excellent for melodies or evolving patterns.
+- **`chronological: false`** returns the final, sorted "palette" of all generated points. This is useful for creating a static set of notes or a "scale" to draw from.
+
+### Mapping a Palette to a Musical Scale
+
+```supercollider
+(
+// Generate a 12-note palette using the standard Conway algorithm
+~palette = SurrealAlgorithms.conwayConstruction(22, chronological: true);
+
+p = Pbind(
+	\instrument, \default,
+	// Use Pseq to cycle through the palette
+	\degree, Pseq(~palette, inf)
+		// Map the 0-1 range to an octave
+		.linlin(0.0, 1.0, 0, 12),
+	\dur, 0.15,
+	\amp, 0.1
+).play;
+)
+```
+
+### Generating Rhythmic Durations from Gaps
+
+A powerful technique is to use the *gaps between the values* as a source for musical durations.
+
+```supercollider
+(
+// Generate a palette with a natural, uneven distribution
+~palette = SurrealAlgorithms.goldenCascade(steps: 20, chronological: false);
+
+// Get the sizes of the gaps by differentiating the sorted palette
+~durations = ~palette.differentiate;
+
+p = Pbind(
+	\instrument, \default,
+	\degree, Prand(~palette, inf),
+	\octave, 6,
+	// Use the calculated gaps as durations
+	\dur, Pseq(~durations, inf) * 8, // Multiply to make them longer
+	\amp, 0.2
+).play;
+)
+```
+
+### Creating a Custom Wavetable
+
+```supercollider
+(
+s.waitForBoot {
+	var sequence = SurrealAlgorithms.zetaCantor(steps: 1024, chronological: true);
+	// Remap the 0..1 range to -1..1 for an audio waveform
+	sequence = sequence.linlin(0, 1, -1, 1);
+	
+	// Safely load the collection into a buffer
+	Buffer.loadCollection(s, sequence, 1, action: { |buf|
+		~buf = buf;
+		// Play only after the buffer is loaded
+		{ Osc.ar(~buf, MouseX.kr(50, 800, 1), 0, 0.25) ! 2 }.play;
+	});
+};
+)
+```
+
+
 ## A Generative "Cookbook"
 
 Theoretically, you can invent an infinite number of such algorithms. Think of each algorithm as a recipe with a few key ingredients. By changing any one ingredient or combining them in new ways, you create a new recipe.
