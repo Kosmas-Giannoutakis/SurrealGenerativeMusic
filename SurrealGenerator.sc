@@ -18,7 +18,10 @@ SurrealGenerator {
 		{14} {SurrealAlgorithms.trigonometricSurreal(steps)}
 		{15} {SurrealAlgorithms.dyadicWave(steps)}
 		{16} {SurrealAlgorithms.primeHarmonicOscillator(steps)}
-		{17} {SurrealAlgorithms.complexSpiral(steps)};
+		{17} {SurrealAlgorithms.complexSpiral(steps)}
+		{18} {SurrealAlgorithms.logisticSurreal(steps)}
+		{19} {SurrealAlgorithms.lorenzSurreal(steps)}
+		{20} {SurrealAlgorithms.logisticLorenzSurreal(steps)};
 
         buf = LocalBuf(palette.size);
         buf.set(palette);

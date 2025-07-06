@@ -1104,4 +1104,197 @@ SurrealAlgorithms {
 		}
 	}
 
+	// 18. Logistic Surreal
+	// This algorithm uses the famous logistic map equation to drive its subdivisions.
+	// The selection strategy is kept simple and deterministic: it always chooses
+	// the largest available gap in the palette. The placement of the new point,
+	// however, is determined by the chaotic output of the logistic map.
+	// This creates fascinating patterns where a predictable process of filling large
+	// spaces is constantly disrupted by chaotic, non-linear placements.
+	*logisticSurreal {
+		|
+		steps = 200,
+		chronological = true,
+		r = 3.9,           // Chaotic regime: typically 3.6 to 4.0
+		logisticInit = nil // Needs to be nil and handled safely
+		|
+
+		var palette, sequence, logisticState;
+		var gaps, maxGap, maxIndex;
+		var left, right, v;
+
+		// Handle default safely
+		logisticInit = logisticInit ? 0.5;
+
+		// Initialize state
+		palette = [0.0, 1.0];
+		sequence = Array.new;
+		logisticState = logisticInit;
+
+		steps.do {
+			// Find gaps between adjacent points
+			gaps = palette.differentiate.drop(1);
+			maxGap = gaps.maxItem;
+			maxIndex = if(maxGap.isNil) { 0 } { gaps.indexOf(maxGap) };
+
+			left = palette[maxIndex];
+			right = palette[maxIndex + 1];
+
+			// Evolve logistic map
+			logisticState = (r * logisticState * (1 - logisticState)).clip(0.0, 1.0);
+
+			// Place new value using chaotic interpolation
+			v = left.blend(right, logisticState);
+
+			// Update sequence and palette
+			sequence = sequence.add(v);
+			palette = palette.insert(maxIndex + 1, v);
+		};
+
+		^if(chronological, sequence, palette);
+	}
+
+	// 19. Lorenz Surreal
+	// This algorithm's evolution is driven by the 3D Lorenz attractor.
+	// At each step, the algorithm follows the chaotic path of the Lorenz system
+	// through its state space. The 'Y' coordinate of the attractor's current
+	// position is used to determine *which* gap in the palette is selected for
+	// subdivision. The placement rule itself is a simple, predictable midpoint split.
+	// This creates a "trail" of subdivisions that follows the Lorenz system's
+	// strange, wandering trajectory.
+	*lorenzSurreal {
+		|
+		steps = 200,
+		chronological = true,
+		sigma = 12.0,
+		rho = 24.4,
+		beta = 1,
+		dt = 0.01,
+		lorenzInit = nil
+		|
+
+		var palette, sequence, lorenzState;
+		var x, y, z, dx, dy, dz;
+		var numGaps, chosenIndex, left, right, v;
+
+		// Compute defaults
+		lorenzInit = lorenzInit ?? [5.0, 5.0, 5.0];
+
+		// Initialize states
+		palette = [0.0, 1.0];
+		sequence = Array.new;
+		lorenzState = lorenzInit.copy;
+
+		steps.do {
+			// Evolve Lorenz system
+			x = lorenzState[0];
+			y = lorenzState[1];
+			z = lorenzState[2];
+
+			dx = sigma * (y - x);
+			dy = x * (rho - z) - y;
+			dz = (x * y) - (beta * z);
+
+			lorenzState[0] = x + (dx * dt);
+			lorenzState[1] = y + (dy * dt);
+			lorenzState[2] = z + (dz * dt);
+
+			// Select gap based on 'y' coordinate
+			numGaps = palette.size - 1;
+			chosenIndex = if(numGaps > 0) {
+				lorenzState[1].abs.asInteger % numGaps;
+			} {
+				0
+			};
+
+			left = palette[chosenIndex];
+			right = palette[chosenIndex + 1];
+
+			// Midpoint placement
+			v = (left + right) * 0.5;
+
+			// Update palette and sequence
+			sequence = sequence.add(v);
+			palette = palette.insert(chosenIndex + 1, v);
+		};
+
+		^if(chronological, sequence, palette);
+	}
+
+
+	// 20. Chaotic Surreal (Lorenz + Logistic)
+	// This advanced algorithm uses two different chaotic systems to guide its evolution.
+	// The Lorenz attractor's 'Y' coordinate determines *which* gap is selected,
+	// creating a wandering, stateful selection path. The logistic map's output
+	// determines *where* the new point is placed within that gap, creating
+	// unpredictable, non-linear subdivisions.
+	*logisticLorenzSurreal {
+		|
+		steps = 200,
+		chronological = true,
+		sigma = 10.0,
+		rho = 35.0,
+		beta = 2.66,         // No expressions, only literal or nil
+		dt = 0.02,
+		lorenzInit = nil,   // Arrays must default to nil
+		r = 3.99,
+		logisticInit = 0.51,
+		chaos = 0.7
+		|
+
+		var palette, sequence;
+		var lorenzState, logisticState;
+		var x, y, z, dx, dy, dz;
+		var numGaps, chosenIndex, left, right, v;
+		var midpointPlacement, chaoticPlacement, finalPlacementRatio;
+
+		// Compute defaults safely
+		lorenzInit = lorenzInit ?? [0.5, 0.5, 0.5];
+
+		// Initialize states
+		lorenzState = lorenzInit.copy;
+		logisticState = logisticInit;
+
+		palette = [0.0, 1.0];
+		sequence = Array.new;
+
+		steps.do {
+			x = lorenzState[0];
+			y = lorenzState[1];
+			z = lorenzState[2];
+
+			dx = sigma * (y - x);
+			dy = x * (rho - z) - y;
+			dz = (x * y) - (beta * z);
+
+			lorenzState[0] = x + (dx * dt);
+			lorenzState[1] = y + (dy * dt);
+			lorenzState[2] = z + (dz * dt);
+
+			numGaps = palette.size - 1;
+			if (numGaps > 0) {
+				chosenIndex = lorenzState[1].abs.asInteger % numGaps;
+			} {
+				chosenIndex = 0;
+			};
+
+			left = palette[chosenIndex];
+			right = palette[chosenIndex + 1];
+
+			logisticState = (r * logisticState * (1 - logisticState)).clip(0.0, 1.0);
+
+			midpointPlacement = 0.5;
+			chaoticPlacement = logisticState;
+			finalPlacementRatio = midpointPlacement.blend(chaoticPlacement, chaos);
+
+			v = left.blend(right, finalPlacementRatio);
+
+			sequence = sequence.add(v);
+			palette = palette.insert(chosenIndex + 1, v);
+		};
+
+		^if(chronological, sequence, palette);
+	}
+
+
 }
